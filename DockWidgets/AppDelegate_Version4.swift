@@ -70,6 +70,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func requestPermissions() {
+        print("🔐 Requesting location permissions...")
         // Request location permission for weather
         LocationManager.shared.requestPermission()
     }

@@ -79,53 +79,58 @@ class WidgetManager: ObservableObject {
     
     private func calculateFixedWidgetPositions(screenFrame: NSRect, dockFrame: NSRect) -> (clockPosition: CGPoint, weatherPosition: CGPoint, musicPosition: CGPoint) {
         
+        // Get the overlay window frame to calculate positions relative to it
+        let overlayFrame = window.frame
+        
         switch dockPositionManager.dockPosition {
         case .bottom:
-            // Vertically center widgets between dock top and bottom
-            let verticalCenter = dockFrame.minY + (dockFrame.height / 2)
+            // For bottom dock, widgets should be centered vertically within the overlay window
+            let verticalCenter = overlayFrame.height / 2
             
-            // Clock: horizontally centered between left screen edge and left dock edge
-            // Since dock spans full width, we'll use the dock's left quarter
-            let clockX = screenFrame.minX + (dockFrame.width / 4)
-            let clockPosition = CGPoint(x: clockX, y: verticalCenter)
+            // Clock: horizontally centered between left screen edge and left edge of dock
+            // For bottom dock, dock spans full width, so we center in the left half of screen
+            let leftZoneCenter = screenFrame.width / 4
+            let clockPosition = CGPoint(x: leftZoneCenter, y: verticalCenter)
             
-            // Weather and Music: horizontally centered between right screen edge and right dock edge
-            // Position them in the right quarter of the dock area
-            let rightQuarterCenter = screenFrame.minX + (dockFrame.width * 3 / 4)
+            // Weather and Music: horizontally centered between right edge of dock and right screen edge
+            // For bottom dock, dock spans full width, so we center in the right half of screen
+            let rightZoneCenter = screenFrame.width * 3 / 4
             
-            // Weather positioned in the right quarter
-            let weatherPosition = CGPoint(x: rightQuarterCenter + 80, y: verticalCenter)
-            
-            // Music positioned slightly to the left of weather to avoid overlap
-            let musicPosition = CGPoint(x: rightQuarterCenter - 80, y: verticalCenter)
+            // Position weather and music side by side in the right zone, both at same vertical center
+            let weatherPosition = CGPoint(x: rightZoneCenter - 70, y: verticalCenter)
+            let musicPosition = CGPoint(x: rightZoneCenter + 70, y: verticalCenter)
             
             return (clockPosition, weatherPosition, musicPosition)
             
         case .left:
-            // Vertically center widgets between dock top and bottom
-            let verticalCenter = dockFrame.minY + (dockFrame.height / 2)
+            // Clock: horizontally centered between left screen edge and left edge of dock
+            let leftZoneCenter = screenFrame.minX + (dockFrame.minX - screenFrame.minX) / 2
+            // Vertically center clock on the entire screen height
+            let screenVerticalCenter = screenFrame.minY + (screenFrame.height / 2)
+            let clockPosition = CGPoint(x: leftZoneCenter, y: screenVerticalCenter)
             
-            // All widgets positioned to the right of the dock
-            let horizontalPosition = dockFrame.maxX + 50
+            // Weather and Music: horizontally centered between right edge of dock and right screen edge
+            let rightZoneCenter = dockFrame.maxX + (screenFrame.maxX - dockFrame.maxX) / 2
             
-            // Spread widgets vertically
-            let clockPosition = CGPoint(x: horizontalPosition, y: verticalCenter - 80)
-            let weatherPosition = CGPoint(x: horizontalPosition, y: verticalCenter)
-            let musicPosition = CGPoint(x: horizontalPosition, y: verticalCenter + 80)
+            // Position weather and music vertically centered in the screen, with slight offset
+            let weatherPosition = CGPoint(x: rightZoneCenter, y: screenVerticalCenter - 40)
+            let musicPosition = CGPoint(x: rightZoneCenter, y: screenVerticalCenter + 40)
             
             return (clockPosition, weatherPosition, musicPosition)
             
         case .right:
-            // Vertically center widgets between dock top and bottom
-            let verticalCenter = dockFrame.minY + (dockFrame.height / 2)
+            // Clock: horizontally centered between left screen edge and left edge of dock
+            let leftZoneCenter = screenFrame.minX + (dockFrame.minX - screenFrame.minX) / 2
+            // Vertically center clock on the entire screen height
+            let screenVerticalCenter = screenFrame.minY + (screenFrame.height / 2)
+            let clockPosition = CGPoint(x: leftZoneCenter, y: screenVerticalCenter)
             
-            // All widgets positioned to the left of the dock
-            let horizontalPosition = dockFrame.minX - 50
+            // Weather and Music: horizontally centered between right edge of dock and right screen edge
+            let rightZoneCenter = dockFrame.maxX + (screenFrame.maxX - dockFrame.maxX) / 2
             
-            // Spread widgets vertically
-            let clockPosition = CGPoint(x: horizontalPosition, y: verticalCenter - 80)
-            let weatherPosition = CGPoint(x: horizontalPosition, y: verticalCenter)
-            let musicPosition = CGPoint(x: horizontalPosition, y: verticalCenter + 80)
+            // Position weather and music vertically centered in the screen, with slight offset
+            let weatherPosition = CGPoint(x: rightZoneCenter, y: screenVerticalCenter - 40)
+            let musicPosition = CGPoint(x: rightZoneCenter, y: screenVerticalCenter + 40)
             
             return (clockPosition, weatherPosition, musicPosition)
         }

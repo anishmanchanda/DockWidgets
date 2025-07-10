@@ -9,6 +9,7 @@ class WeatherWidget: BaseWidget {
     private let settings = UserSettings.shared
     private var settingsSubscription: AnyCancellable?
     private var updateTimer: Timer?
+    private var timeoutTimer: Timer?
     
     override init(position: CGPoint, size: CGSize = CGSize(width: 160, height: 50)) {
         super.init(position: position, size: size)
@@ -34,35 +35,81 @@ class WeatherWidget: BaseWidget {
     
     private func loadWeatherData() {
         isLoading = true
+        print("🌤️ WeatherWidget: Loading weather data...")
+        print("🌤️ WeatherWidget: Location source: \(settings.locationSource)")
+        
+        // Add timeout to prevent infinite loading
+        timeoutTimer?.invalidate()
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
+            if self?.isLoading == true {
+                print("🌤️ WeatherWidget: Timeout - falling back to default location")
+                self?.isLoading = false
+                self?.loadWeatherForCity("New York")
+            }
+        }
         
         if settings.locationSource == .custom && !settings.customLocation.isEmpty {
             // Use custom location
-            weatherAPI.fetchWeatherByCity(settings.customLocation) { [weak self] result in
-                DispatchQueue.main.async {
-                    self?.isLoading = false
-                    switch result {
-                    case .success(let data):
-                        self?.weatherData = self?.convertTemperature(data)
-                    case .failure(let error):
-                        print("Weather API error: \(error)")
-                    }
-                }
-            }
+            print("🌤️ WeatherWidget: Using custom location: \(settings.customLocation)")
+            loadWeatherForCity(settings.customLocation)
         } else {
-            // Use GPS location
-            LocationManager.shared.getCurrentLocation { [weak self] location in
-                guard let location = location else { return }
-                
-                self?.weatherAPI.fetchWeather(for: location) { result in
-                    DispatchQueue.main.async {
-                        self?.isLoading = false
-                        switch result {
-                        case .success(let data):
-                            self?.weatherData = self?.convertTemperature(data)
-                        case .failure(let error):
-                            print("Weather API error: \(error)")
+            // Use GPS location with better error handling
+            print("🌤️ WeatherWidget: Using GPS location")
+            
+            // Check if location services are available
+            if CLLocationManager.locationServicesEnabled() {
+                LocationManager.shared.getCurrentLocation { [weak self] location in
+                    guard let location = location else {
+                        print("🌤️ WeatherWidget: Failed to get location - using default location")
+                        DispatchQueue.main.async {
+                            self?.isLoading = false
+                            self?.loadWeatherForCity("New York")
+                        }
+                        return
+                    }
+                    
+                    print("🌤️ WeatherWidget: Got location: \(location)")
+                    self?.weatherAPI.fetchWeather(for: location) { result in
+                        DispatchQueue.main.async {
+                            self?.timeoutTimer?.invalidate()
+                            self?.isLoading = false
+                            switch result {
+                            case .success(let data):
+                                print("🌤️ WeatherWidget: Successfully fetched weather data: \(data)")
+                                self?.weatherData = self?.convertTemperature(data)
+                            case .failure(let error):
+                                print("🌤️ WeatherWidget: Weather API error: \(error)")
+                                // Fall back to default location on API error
+                                self?.loadWeatherForCity("New York")
+                            }
                         }
                     }
+                }
+            } else {
+                print("🌤️ WeatherWidget: Location services disabled - using default location")
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    self.loadWeatherForCity("New York")
+                }
+            }
+        }
+    }
+    
+    private func loadWeatherForCity(_ city: String) {
+        timeoutTimer?.invalidate()
+        isLoading = true
+        print("🌤️ WeatherWidget: Loading weather for city: \(city)")
+        
+        weatherAPI.fetchWeatherByCity(city) { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                switch result {
+                case .success(let data):
+                    print("🌤️ WeatherWidget: Successfully fetched weather data for \(city)")
+                    self?.weatherData = self?.convertTemperature(data)
+                case .failure(let error):
+                    print("🌤️ WeatherWidget: Weather API error for \(city): \(error)")
+                    self?.weatherData = nil
                 }
             }
         }
