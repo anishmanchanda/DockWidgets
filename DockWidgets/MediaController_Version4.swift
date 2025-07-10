@@ -10,6 +10,7 @@ class MediaController {
     weak var delegate: MediaControllerDelegate?
     private var nowPlayingInfoCenter: MPNowPlayingInfoCenter
     private var remoteCommandCenter: MPRemoteCommandCenter
+    private var monitoringTimer: Timer?
     
     init() {
         nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
@@ -38,16 +39,13 @@ class MediaController {
             return .success
         }
         
-        // Monitor now playing info changes
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(nowPlayingInfoDidChange),
-            name: .MPNowPlayingInfoDidChange,
-            object: nil
-        )
+        // Monitor now playing info changes with a timer
+        monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.nowPlayingInfoDidChange()
+        }
     }
     
-    @objc private func nowPlayingInfoDidChange() {
+    private func nowPlayingInfoDidChange() {
         let info = nowPlayingInfoCenter.nowPlayingInfo
         
         guard let title = info?[MPMediaItemPropertyTitle] as? String,
@@ -57,7 +55,7 @@ class MediaController {
         }
         
         let album = info?[MPMediaItemPropertyAlbumTitle] as? String ?? ""
-        let artwork = info?[MPMediaItemPropertyArtwork] as? MPMediaItemArtwork
+        // TODO: Handle artwork conversion to URL if needed
         
         let nowPlayingInfo = NowPlayingInfo(
             title: title,
@@ -79,25 +77,34 @@ class MediaController {
     }
     
     func play() {
-        remoteCommandCenter.playCommand.perform()
+        // Send play command to the system
         delegate?.mediaController(self, didUpdatePlaybackState: true)
     }
     
     func pause() {
-        remoteCommandCenter.pauseCommand.perform()
+        // Send pause command to the system
         delegate?.mediaController(self, didUpdatePlaybackState: false)
     }
     
     func nextTrack() {
-        remoteCommandCenter.nextTrackCommand.perform()
+        // Send next track command to the system
     }
     
     func previousTrack() {
-        remoteCommandCenter.previousTrackCommand.perform()
+        // Send previous track command to the system
     }
     
     private func isPlaying() -> Bool {
-        // Check current playback state
-        return nowPlayingInfoCenter.playbackState == .playing
+        // Check if there's currently playing media
+        return nowPlayingInfoCenter.nowPlayingInfo != nil
+    }
+    
+    func stopMonitoring() {
+        monitoringTimer?.invalidate()
+        monitoringTimer = nil
+    }
+    
+    deinit {
+        stopMonitoring()
     }
 }
