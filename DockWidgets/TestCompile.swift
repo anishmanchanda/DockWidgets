@@ -3,13 +3,11 @@ import Foundation
 // Test compilation of our fixed classes
 class TestCompile {
     static func test() {
-        // Test MediaController
-        let mediaController = MediaController()
+        // Test AppleScriptMediaController
+        let mediaController = AppleScriptMediaController()
         mediaController.startMonitoring()
         
-        // Note: MPNowPlayingInfoDidChange notification doesn't exist in MediaPlayer framework
-        // The MediaController now uses timer-based polling instead
-        print("MediaController initialized successfully")
+        print("AppleScriptMediaController initialized successfully")
         
         // Test WeatherData creation
         let weatherData = WeatherData(
@@ -20,14 +18,15 @@ class TestCompile {
         )
         print("Weather data created: \(weatherData.location)")
         
-        // Test NowPlayingInfo creation
+        // Test NowPlayingInfo creation with source app
         let nowPlayingInfo = NowPlayingInfo(
             title: "Test Song",
             artist: "Test Artist",
             album: "Test Album",
-            artworkURL: nil
+            artworkURL: nil,
+            sourceApp: "Music"
         )
-        print("Now playing info created: \(nowPlayingInfo.title)")
+        print("Now playing info created: \(nowPlayingInfo.title) from \(nowPlayingInfo.sourceApp ?? "Unknown")")
         
         print("All tests passed!")
     }
