@@ -1,10 +1,11 @@
 import SwiftUI
-import MediaPlayer
+import OSLog
 
 class NowPlayingWidget: BaseWidget {
     @Published var nowPlayingInfo: NowPlayingInfo?
     @Published var isPlaying = false
-    private let mediaController = MediaController()
+    private let mediaController = AppleScriptMediaController()
+    private let logger = Logger(subsystem: "com.dockwidgets", category: "NowPlayingWidget")
     
     override init(position: CGPoint, size: CGSize = CGSize(width: 160, height: 50)) {
         super.init(position: position, size: size)
@@ -12,6 +13,7 @@ class NowPlayingWidget: BaseWidget {
     }
     
     private func setupMediaController() {
+        logger.info("Setting up AppleScript media controller")
         mediaController.delegate = self
         mediaController.startMonitoring()
     }
@@ -21,26 +23,33 @@ class NowPlayingWidget: BaseWidget {
     }
     
     func playPause() {
+        logger.info("Play/pause button pressed")
         mediaController.playPause()
     }
     
     func nextTrack() {
+        logger.info("Next track button pressed")
         mediaController.nextTrack()
     }
     
     func previousTrack() {
+        logger.info("Previous track button pressed")
         mediaController.previousTrack()
+    }
+    
+    deinit {
+        mediaController.stopMonitoring()
     }
 }
 
-extension NowPlayingWidget: MediaControllerDelegate {
-    func mediaController(_ controller: MediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
+extension NowPlayingWidget: AppleScriptMediaControllerDelegate {
+    func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
         DispatchQueue.main.async {
             self.nowPlayingInfo = info
         }
     }
     
-    func mediaController(_ controller: MediaController, didUpdatePlaybackState isPlaying: Bool) {
+    func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool) {
         DispatchQueue.main.async {
             self.isPlaying = isPlaying
         }
@@ -54,17 +63,16 @@ struct NowPlayingView: View {
     var body: some View {
         HStack(spacing: 8) {
             if let info = widget.nowPlayingInfo {
-                // Album artwork
-                AsyncImage(url: info.artworkURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 40, height: 40)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                // Album artwork placeholder
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        // Show app icon or music note
+                        Image(systemName: info.sourceApp == "Spotify" ? "s.circle.fill" : "music.note")
+                            .foregroundColor(.white.opacity(0.8))
+                            .font(.system(size: 20))
+                    )
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(info.title)
@@ -72,11 +80,19 @@ struct NowPlayingView: View {
                         .foregroundColor(.white)
                         .shadow(color: .black, radius: 1, x: 0, y: 0)
                         .lineLimit(1)
-                    Text(info.artist)
-                        .font(.system(size: getFontSize() * 0.6))
-                        .foregroundColor(.white.opacity(0.8))
-                        .shadow(color: .black, radius: 1, x: 0, y: 0)
-                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        Text(info.artist)
+                            .font(.system(size: getFontSize() * 0.6))
+                            .foregroundColor(.white.opacity(0.8))
+                            .shadow(color: .black, radius: 1, x: 0, y: 0)
+                            .lineLimit(1)
+                        if let sourceApp = info.sourceApp {
+                            Text("• \(sourceApp)")
+                                .font(.system(size: getFontSize() * 0.5))
+                                .foregroundColor(.white.opacity(0.6))
+                                .shadow(color: .black, radius: 1, x: 0, y: 0)
+                        }
+                    }
                 }
                 
                 Spacer()
@@ -104,15 +120,21 @@ struct NowPlayingView: View {
                             .font(.system(size: getFontSize() * 0.7))
                             .foregroundColor(.white)
                             .shadow(color: .black, radius: 1, x: 0, y: 0)
-                            .foregroundColor(.white)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
             } else {
-                Text("No media playing")
-                    .font(.system(size: getFontSize() * 0.7))
-                    .foregroundColor(.white.opacity(0.6))
-                    .shadow(color: .black, radius: 1, x: 0, y: 0)
+                HStack(spacing: 8) {
+                    Image(systemName: "music.note")
+                        .font(.system(size: getFontSize() * 0.8))
+                        .foregroundColor(.white.opacity(0.6))
+                        .shadow(color: .black, radius: 1, x: 0, y: 0)
+                    
+                    Text("No music playing")
+                        .font(.system(size: getFontSize() * 0.7))
+                        .foregroundColor(.white.opacity(0.6))
+                        .shadow(color: .black, radius: 1, x: 0, y: 0)
+                }
             }
         }
         .padding(8)
@@ -136,4 +158,13 @@ struct NowPlayingInfo {
     let artist: String
     let album: String
     let artworkURL: URL?
+    let sourceApp: String?
+    
+    init(title: String, artist: String, album: String, artworkURL: URL?, sourceApp: String? = nil) {
+        self.title = title
+        self.artist = artist
+        self.album = album
+        self.artworkURL = artworkURL
+        self.sourceApp = sourceApp
+    }
 }
