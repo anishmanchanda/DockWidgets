@@ -39,55 +39,16 @@ class DockPositionManager: ObservableObject {
     
     private func getDockInfo() -> (position: DockPosition, frame: NSRect, magnification: CGFloat) {
         let screenFrame = NSScreen.main?.frame ?? NSRect.zero
-        
-        // Try to get dock position from user defaults
-        let dockOrientation = defaults.string(forKey: "orientation") ?? "bottom"
-        
-        print("🎯 DockPositionManager: Raw orientation=\(dockOrientation)")
-        
-        // Determine dock position
-        let position: DockPosition
-        switch dockOrientation {
-        case "left":
-            position = .left
-        case "right":
-            position = .right
-        default:
-            position = .bottom
-        }
-        
-        // Use fixed dock size (no magnification tracking)
+        let dockDefaults = UserDefaults(suiteName: "com.apple.dock")
         let fixedDockSize = getDockTileSize()
-        
-        print("🎯 DockPositionManager: Fixed dock size=\(fixedDockSize)")
-        
-        let dockFrame: NSRect
-        switch position {
-        case .bottom:
-            dockFrame = NSRect(
-                x: screenFrame.minX,
-                y: screenFrame.minY,
-                width: screenFrame.width,
-                height: fixedDockSize
-            )
-        case .left:
-            dockFrame = NSRect(
-                x: screenFrame.minX,
-                y: screenFrame.minY,
-                width: fixedDockSize,
-                height: screenFrame.height
-            )
-        case .right:
-            dockFrame = NSRect(
-                x: screenFrame.maxX - fixedDockSize,
-                y: screenFrame.minY,
-                width: fixedDockSize,
-                height: screenFrame.height
-            )
-        }
-        
-        print("🎯 DockPositionManager: Final dock frame=\(dockFrame)")
-        return (position, dockFrame, 1.0) // Fixed magnification of 1.0
+        let persistentApps = dockDefaults?.array(forKey: "persistent-apps")?.count ?? 0
+        let persistentOthers = dockDefaults?.array(forKey: "persistent-others")?.count ?? 0
+        // +1 for trash, +1 for separator
+        let iconCount = max(persistentApps + persistentOthers + 2, 1)
+        let dockWidth = CGFloat(iconCount) * fixedDockSize
+        let dockX = (screenFrame.width - dockWidth) / 2 + screenFrame.minX
+        let dockFrame = NSRect(x: dockX, y: screenFrame.minY, width: dockWidth, height: fixedDockSize)
+        return (.bottom, dockFrame, 1.0)
     }
     
     private func getDockTileSize() -> CGFloat {
@@ -113,9 +74,12 @@ class DockPositionManager: ObservableObject {
         print("🎯 DockPositionManager: Using fallback tile size: \(fallbackSize)")
         return fallbackSize
     }
-    
+    private func getDockScreen() -> NSScreen? {
+        NSScreen.screens.first(where: { $0.frame.contains(dockFrame.origin) }) ?? NSScreen.main
+    }
     func getWidgetSafeZone() -> NSRect {
-        let screenFrame = NSScreen.main?.frame ?? NSRect.zero
+        //let screenFrame = NSScreen.main?.frame ?? NSRect.zero
+        let screenFrame = getDockScreen()?.frame ?? NSRect.zero
         let buffer: CGFloat = 20 // Buffer to avoid dock overlap
         
         switch dockPosition {

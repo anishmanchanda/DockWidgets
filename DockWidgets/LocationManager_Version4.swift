@@ -1,36 +1,14 @@
+import Foundation
 import CoreLocation
 
-class LocationManager: NSObject, ObservableObject {
+class LocationManager: ObservableObject {
     static let shared = LocationManager()
-    private let locationManager = CLLocationManager()
-    private var locationCallback: ((CLLocation?) -> Void)?
     
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-    }
+    @Published var location: CLLocation = CLLocation(latitude: 28.6139, longitude: 77.2090) // Default: New Delhi
     
-    func requestPermission() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    func getCurrentLocation(completion: @escaping (CLLocation?) -> Void) {
-        locationCallback = completion
-        locationManager.requestLocation()
-    }
-}
-
-extension LocationManager: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.first else { return }
-        locationCallback?(location)
-        locationCallback = nil
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error)")
-        locationCallback?(nil)
-        locationCallback = nil
+    // Users can change location from preferences by setting this property
+    func updateLocation(latitude: Double, longitude: Double) {
+        location = CLLocation(latitude: latitude, longitude: longitude)
+        print("📍 Location updated to: \(latitude), \(longitude)")
     }
 }

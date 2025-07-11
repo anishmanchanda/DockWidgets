@@ -3,9 +3,9 @@ import SwiftUI
 
 // @NSApplicationMain removed - using main.swift instead
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var overlayWindow: OverlayWindow?
+    var overlayWindow: OverlayWindow? //main transparent window
     var widgetManager: WidgetManager?
-    var preferencesWindow: PreferencesWindow?
+    var preferencesWindow: PreferencesWindow? // Preferences window for settings
     
     override init() {
         super.init()
@@ -17,7 +17,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Force the app to activate
         NSApp.activate(ignoringOtherApps: true)
-        
         // Create the overlay window
         let screenFrame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
         print("📱 Screen frame: \(screenFrame)")
@@ -70,8 +69,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func requestPermissions() {
-        print("🔐 Requesting location permissions...")
-        // Request location permission for weather
-        LocationManager.shared.requestPermission()
+        print("🔐 Skipping location permissions. Defaulting to New Delhi.")
+        // No location permission or GPS tracking. Location is set to New Delhi by default.
     }
 }
