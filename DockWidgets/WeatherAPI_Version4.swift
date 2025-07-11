@@ -53,11 +53,8 @@ class WeatherAPI {
                 let weatherData = WeatherData(
                     location: weatherResponse.name,
                     temperature: Int(weatherResponse.main.temp),
-                    condition: weatherResponse.weather.first?.description.capitalized ?? "Unknown",
+                    condition: weatherResponse.weather.first?.main.capitalized ?? "Unknown",
                     weatherIcon: self.getWeatherIcon(for: weatherResponse.weather.first?.main ?? ""),
-                    humidity: weatherResponse.main.humidity ?? 0,
-                    windSpeed: weatherResponse.wind?.speed ?? 0.0,
-                    feelsLike: Int(weatherResponse.main.feelsLike ?? weatherResponse.main.temp)
                 )
                 completion(.success(weatherData))
             } catch {
@@ -105,11 +102,8 @@ class WeatherAPI {
                 let weatherData = WeatherData(
                     location: weatherResponse.name,
                     temperature: Int(weatherResponse.main.temp),
-                    condition: weatherResponse.weather.first?.description.capitalized ?? "Unknown",
+                    condition: weatherResponse.weather.first?.main.capitalized ?? "Unknown",
                     weatherIcon: self.getWeatherIcon(for: weatherResponse.weather.first?.main ?? ""),
-                    humidity: weatherResponse.main.humidity ?? 0,
-                    windSpeed: weatherResponse.wind?.speed ?? 0.0,
-                    feelsLike: Int(weatherResponse.main.feelsLike ?? weatherResponse.main.temp)
                 )
                 completion(.success(weatherData))
             } catch {
@@ -125,14 +119,14 @@ class WeatherAPI {
     
     private func getWeatherIcon(for condition: String) -> String {
         switch condition.lowercased() {
-        case "clear": return "☀️"
-        case "clouds": return "☁️"
-        case "rain": return "🌧️"
-        case "snow": return "❄️"
-        case "thunderstorm": return "⛈️"
-        case "drizzle": return "🌦️"
-        case "mist", "fog": return "🌫️"
-        default: return "🌤️"
+        case "clear": return "sun.max.fill"
+        case "clouds": return "cloud.fill"
+        case "rain": return "cloud.rain.fill"
+        case "snow": return "snow"
+        case "thunderstorm": return "cloud.bolt.rain.fill"
+        case "drizzle": return "cloud.drizzle.fill"
+        case "mist", "fog": return "cloud.fog.fill"
+        default: return "cloud.sun.fill"
         }
     }
 }
@@ -195,8 +189,6 @@ struct WeatherData: Identifiable {
     let location: String
     let temperature: Int
     let condition: String
-    let weatherIcon: String
-    let humidity: Int
-    let windSpeed: Double
-    let feelsLike: Int
+    let weatherIcon: String?
+    
 }

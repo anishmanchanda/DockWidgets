@@ -17,9 +17,7 @@ class TestCompile {
             temperature: 25,
             condition: "Sunny",
             weatherIcon: "☀️",
-            humidity: 50,
-            windSpeed: 5.0,
-            feelsLike: 27
+            
         )
         print("Weather data created: \(weatherData.location)")
         

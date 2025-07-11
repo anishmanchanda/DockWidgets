@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct WeatherWidget_Version4: View {
@@ -10,15 +9,6 @@ struct WeatherWidget_Version4: View {
     var body: some View {
         print("WeatherWidget_Version4 body rendered")
         return VStack(spacing: 8) {
-            HStack {
-                Image(systemName: "cloud.sun.fill")
-                    .foregroundColor(.blue)
-                    .font(.title2)
-                Text("Weather")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                Spacer()
-            }
             
             if isLoading {
                 HStack {
@@ -31,14 +21,18 @@ struct WeatherWidget_Version4: View {
             } else if let weatherData = widget.weatherData {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
+                        if let icon = weatherData.weatherIcon {
+                            Image(systemName: icon)
+                                .font(.title2)
+                        }
                         Text("\(Int(weatherData.temperature))°")
                             .font(.title2)
                             .fontWeight(.bold)
-                        Text(weatherData.condition)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                         Spacer()
                     }
+                    Text(weatherData.condition)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     
                     Text(weatherData.location)
                         .font(.caption2)

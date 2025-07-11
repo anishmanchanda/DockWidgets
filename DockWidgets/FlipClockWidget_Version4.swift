@@ -53,7 +53,7 @@ struct FlipClockView: View {
             ForEach(Array(widget.currentTime.enumerated()), id: \.offset) { index, character in
                 if character == ":" {
                     Text(":")
-                        .font(.system(size: getFontSize(), weight: .bold, design: .monospaced))
+                        .font(.system(size: getFontSize(), weight: .bold, design: .default))
                         .foregroundColor(.white)
                         .shadow(color: .black, radius: 2, x: 0, y: 0)  // Add shadow for better readability
                 } else {
@@ -95,7 +95,7 @@ struct FlipDigitView: View {
             
             // Flip animation
             Text(character)
-                .font(.system(size: getFontSize(), weight: .bold, design: .monospaced))
+                .font(.system(size: getFontSize(), weight: .bold, design: .default))
                 .foregroundColor(.white)
                 .shadow(color: .black, radius: 2, x: 0, y: 0)  // Enhanced shadow for better readability
                 .rotation3DEffect(
