@@ -27,15 +27,24 @@
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs location access to show weather information for your current location.</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>This app needs access to control media playback and get now playing information.</string>
+    <string>Access to control media playback</string>
     
-    <!-- Make it a background app (no dock icon) -->
+    <!-- Make it a backgroundapp (no dock icon)-->
     <key>LSUIElement</key>
     <true/>
     
     <!-- App Category -->
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.utilities</string>
+    
+    <key>NSAppleMusicUsageDescription</key>
+    <string>This app requires access to your music library to play and manage music.</string>
+    
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
     
 </dict>
 </plist>

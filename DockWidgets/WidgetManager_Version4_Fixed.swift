@@ -8,14 +8,21 @@ class WidgetManager: ObservableObject {
     private let settings = UserSettings.shared
     private let dockPositionManager = DockPositionManager.shared
     private var settingsSubscription: AnyCancellable?
+    private var mediaController: AppleScriptMediaController?
     
     init(window: OverlayWindow) {
         self.window = window
         setupObservers()
         setupDefaultWidgets()
         startDebugTimer()
+        setupMediaController()
     }
-    
+    private func setupMediaController() {
+        mediaController = AppleScriptMediaController()
+        mediaController?.delegate = self
+        mediaController?.startMonitoring()
+        print("🎯 MediaController: Monitoring started")
+    }
     private func setupObservers() {
         // Only observe settings changes, not dock position changes
         settingsSubscription = NotificationCenter.default.publisher(for: .settingsChanged)
@@ -133,5 +140,14 @@ print("screenFrame.maxX in calculateFixedWidgetPositions: \(screenFrame.maxX)")
         Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
             print("🔍 Debug: \(self.widgets.count) widgets active, visibility: \(self.widgets.map { "\(type(of: $0)): \($0.isVisible)" })")
         }
+    }
+}
+extension WidgetManager: AppleScriptMediaControllerDelegate {
+    func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
+        print("🎯 Now playing info updated: \(info?.displayText ?? "No music playing")")
+    }
+
+    func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool) {
+        print("🎯 Playback state updated: \(isPlaying ? "Playing" : "Paused")")
     }
 }

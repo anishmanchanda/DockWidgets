@@ -8,6 +8,7 @@ struct NowPlayingInfo {
     let album: String
     let app: AppleScriptMediaController.MediaApp
     
+    
     var displayText: String {
         if album.isEmpty {
             return "\(title) – \(artist)"
@@ -20,6 +21,31 @@ struct NowPlayingInfo {
 protocol AppleScriptMediaControllerDelegate: AnyObject {
     func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?)
     func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool)
+}
+
+class ViewController: NSViewController {
+    private var mediaController: AppleScriptMediaController?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        mediaController = AppleScriptMediaController()
+        mediaController?.delegate = self
+        
+        mediaController?.requestPermissionsExplicitly()
+        
+        mediaController?.startMonitoring() // Start monitoring here
+    }
+}
+
+extension ViewController: AppleScriptMediaControllerDelegate {
+    func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
+        print("Now playing info updated: \(info?.displayText ?? "No music playing")")
+    }
+
+    func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool) {
+        print("Playback state updated: \(isPlaying ? "Playing" : "Paused")")
+    }
 }
 
 class AppleScriptMediaController: ObservableObject {
@@ -44,8 +70,30 @@ class AppleScriptMediaController: ObservableObject {
             }
         }
     }
-    
+    func requestPermissionsExplicitly() {
+        // Force permission dialog by directly accessing the applications
+        let musicPermissionScript = """
+        tell application "System Events"
+            tell process "Music"
+                return "permission requested"
+            end tell
+        end tell
+        """
+        
+        let spotifyPermissionScript = """
+        tell application "System Events"
+            tell process "Spotify"
+                return "permission requested"
+            end tell
+        end tell
+        """
+        
+        // These will trigger permission dialogs
+        executeAppleScript(musicPermissionScript)
+        executeAppleScript(spotifyPermissionScript)
+    }
     func startMonitoring() {
+        print("startMonitoring called")
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             self?.updateNowPlaying()
         }
@@ -59,6 +107,7 @@ class AppleScriptMediaController: ObservableObject {
     
     private func updateNowPlaying() {
         // Check Apple Music first
+        print("updateNowPlaying called")
         if let musicInfo = getMusicInfo() {
             currentTrack = musicInfo
             currentApp = .music
@@ -90,18 +139,32 @@ class AppleScriptMediaController: ObservableObject {
     
     private func getMusicInfo() -> NowPlayingInfo? {
         let script = """
-        tell application "Music"
-            if it is running and player state is playing then
-                set trackName to name of current track
-                set artistName to artist of current track
-                set albumName to album of current track
-                return trackName & "|||" & artistName & "|||" & albumName
-            end if
-        end tell
-        return ""
+        if application "Music" is running then
+            tell application "Music"
+                try
+                    if current track exists then
+                        set trackName to name of current track
+                        set artistName to artist of current track
+                        set albumName to album of current track
+                        return trackName & "|||" & artistName & "|||" & albumName
+                    else
+                        return "no track"
+                    end if
+                on error errMsg
+                    return "error: " & errMsg
+                end try
+            end tell
+        else
+            return "not running"
+        end if
         """
         
         guard let result = executeAppleScript(script), !result.isEmpty else {
+            return nil
+        }
+        
+        if result == "no track" || result.hasPrefix("error") || result == "not running" {
+            print("Music info: \(result)")
             return nil
         }
         
@@ -115,7 +178,6 @@ class AppleScriptMediaController: ObservableObject {
             app: .music
         )
     }
-    
     private func isMusicPlaying() -> Bool {
         let script = """
         tell application "Music"
@@ -133,17 +195,31 @@ class AppleScriptMediaController: ObservableObject {
     
     private func getSpotifyInfo() -> NowPlayingInfo? {
         let script = """
-        tell application "Spotify"
-            if it is running and player state is playing then
-                set trackName to name of current track
-                set artistName to artist of current track
-                return trackName & "|||" & artistName
-            end if
-        end tell
-        return ""
+        if application "Spotify" is running then
+            tell application "Spotify"
+                try
+                    if current track exists then
+                        set trackName to name of current track
+                        set artistName to artist of current track
+                        return trackName & "|||" & artistName
+                    else
+                        return "no track"
+                    end if
+                on error errMsg
+                    return "error: " & errMsg
+                end try
+            end tell
+        else
+            return "not running"
+        end if
         """
         
         guard let result = executeAppleScript(script), !result.isEmpty else {
+            return nil
+        }
+        
+        if result == "no track" || result.hasPrefix("error") || result == "not running" {
+            print("Spotify info: \(result)")
             return nil
         }
         
@@ -174,7 +250,9 @@ class AppleScriptMediaController: ObservableObject {
     // MARK: - Media Controls
     
     func playPause() {
+        print("playPause called")
         switch currentApp {
+            
         case .music:
             executeAppleScript("tell application \"Music\" to playpause")
         case .spotify:
@@ -209,17 +287,63 @@ class AppleScriptMediaController: ObservableObject {
     
     // MARK: - AppleScript Execution
     
+    @discardableResult
     private func executeAppleScript(_ script: String) -> String? {
-        let appleScript = NSAppleScript(source: script)
-        var error: NSDictionary?
+        print("Executing AppleScript:")
         
-        let result = appleScript?.executeAndReturnError(&error)
-        
-        if let error = error {
-            print("AppleScript error: \(error)")
+        // Create the AppleScript
+        guard let appleScript = NSAppleScript(source: script) else {
+            print("Failed to create AppleScript")
             return nil
         }
         
-        return result?.stringValue
+        var error: NSDictionary?
+        
+        // Execute the script
+        let result = appleScript.executeAndReturnError(&error)
+        
+        if let error = error {
+            print("AppleScript error: \(error)")
+            
+            // Check if it's a permission error
+            if let errorCode = error[NSAppleScript.errorNumber] as? Int {
+                switch errorCode {
+                case -1743: // errAEEventNotPermitted
+                    print("Permission denied - user needs to grant automation access")
+                    // You could show an alert here directing user to System Preferences
+                    DispatchQueue.main.async {
+                        self.showPermissionAlert()
+                    }
+                case -1728: // errAENoSuchObject
+                    print("Application not found or not running")
+                default:
+                    print("AppleScript error code: \(errorCode)")
+                }
+            }
+            
+            let errorInfo = error[NSAppleScript.errorMessage] as? String ?? "Unknown error"
+            print("Error details: \(errorInfo)")
+            return nil
+        }
+        
+        
+        let resultString = result.stringValue ?? ""
+        print("AppleScript result: \(resultString)")
+        return resultString.isEmpty ? nil : resultString
+    }
+
+    private func showPermissionAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Permission Required"
+        alert.informativeText = "This app needs permission to control Music and Spotify. Please go to System Preferences > Security & Privacy > Privacy > Automation and enable access for this app."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Open System Preferences")
+        alert.addButton(withTitle: "Cancel")
+        
+        if alert.runModal() == .alertFirstButtonReturn {
+            // Open System Preferences to Automation section
+            let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!
+            NSWorkspace.shared.open(url)
+        }
     }
 }
