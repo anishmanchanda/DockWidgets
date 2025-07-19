@@ -75,44 +75,51 @@ class OverlayWindow: NSWindow {
     }
     
     private func getDockHeight() -> CGFloat {
+        guard let screen = NSScreen.main else {
+            print("🪟 No main screen detected, using fallback dock height.")
+            return 70 // Fallback to a reasonable default height in pixels
+        }
+        
+        let scaleFactor = screen.backingScaleFactor
+
         // Method 1: Try DockPositionManager
         let dockFrame = dockPositionManager.dockFrame
         if dockFrame.height > 0 {
-            print("🪟 Using DockPositionManager height: \(dockFrame.height)")
-            return dockFrame.height
+            let heightInPixels = dockFrame.height * scaleFactor
+            print("🪟 Using DockPositionManager height in pixels: \(heightInPixels)")
+            return heightInPixels
         }
-        
+
         // Method 2: Try UserDefaults (dock tile size)
         if let dockTileSize = UserDefaults.standard.object(forKey: "tilesize") as? CGFloat {
-            let calculatedHeight = dockTileSize + 20 // Add padding
-            print("🪟 Using UserDefaults tile size: \(dockTileSize) -> height: \(calculatedHeight)")
+            let calculatedHeight = dockTileSize * scaleFactor // Removed padding
+            print("🪟 Using UserDefaults tile size in pixels: \(dockTileSize) -> height: \(calculatedHeight)")
             return calculatedHeight
         }
-        
+
         // Method 3: Try getting dock process and estimate
         let task = Process()
         task.launchPath = "/usr/bin/defaults"
         task.arguments = ["read", "com.apple.dock", "tilesize"]
-        
+
         let pipe = Pipe()
         task.standardOutput = pipe
         task.launch()
         task.waitUntilExit()
-        
+
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
            let tileSize = Double(output) {
-            let calculatedHeight = CGFloat(tileSize) + 20
-            print("🪟 Using dock defaults tile size: \(tileSize) -> height: \(calculatedHeight)")
+            let calculatedHeight = CGFloat(tileSize) * scaleFactor // Removed padding
+            print("🪟 Using dock defaults tile size in pixels: \(tileSize) -> height: \(calculatedHeight)")
             return calculatedHeight
         }
-        
+
         // Method 4: Fallback to estimated dock height
-        let fallbackHeight: CGFloat = 80
-        print("🪟 Using fallback dock height: \(fallbackHeight)")
+        let fallbackHeight: CGFloat = 70 * scaleFactor // Reduced fallback height
+        print("🪟 Using fallback dock height in pixels: \(fallbackHeight)")
         return fallbackHeight
     }
-    
     private func updateContentView() {
         guard let widgetManager = widgetManager else { return }
         
@@ -127,33 +134,16 @@ class OverlayWindow: NSWindow {
         let dockFrame = dockPositionManager.dockFrame
         let buffer: CGFloat = 50
         
-        switch dockPositionManager.dockPosition {
-        case .bottom:
-            return NSRect(
-                x: 0,
-                y: 0,
-                width: screenFrame.width,
-                height: dockFrame.maxY + buffer + 100
-            )
-        case .left:
-            return NSRect(
-                x: 0,
-                y: 0,
-                width: dockFrame.maxX + buffer + 200,
-                height: screenFrame.height
-            )
-        case .right:
-            return NSRect(
-                x: dockFrame.minX - buffer - 200,
-                y: 0,
-                width: buffer + 200,
-                height: screenFrame.height
-            )
-        }
-    }
     
-    private func getDockPosition() -> DockPosition {
-        return dockPositionManager.dockPosition
+        
+        return NSRect(
+            x: 0,
+            y: 0,
+            width: screenFrame.width,
+            height: dockFrame.maxY + buffer + 100
+            )
+        
+        
     }
 }
 

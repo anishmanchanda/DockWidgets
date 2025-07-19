@@ -38,9 +38,22 @@
 		DC1500F62E1FC0F900AA8D0E /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DC670A222E2C52A6008D68AF /* Exceptions for "DockWidgets" folder in "DockWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = DC1500C52E1FC02700AA8D0E /* DockWidgets */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DC1500C82E1FC02700AA8D0E /* DockWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DC670A222E2C52A6008D68AF /* Exceptions for "DockWidgets" folder in "DockWidgets" target */,
+			);
 			path = DockWidgets;
 			sourceTree = "<group>";
 		};

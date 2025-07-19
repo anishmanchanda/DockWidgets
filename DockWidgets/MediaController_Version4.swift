@@ -90,7 +90,7 @@ class AppleScriptMediaController: ObservableObject {
         
         // These will trigger permission dialogs
         executeAppleScript(musicPermissionScript)
-        executeAppleScript(spotifyPermissionScript)
+        //executeAppleScript(spotifyPermissionScript)
     }
     func startMonitoring() {
         print("startMonitoring called")
@@ -328,7 +328,7 @@ class AppleScriptMediaController: ObservableObject {
         
         
         let resultString = result.stringValue ?? ""
-        print("AppleScript result: \(resultString)")
+        //print("AppleScript result: \(resultString)")
         return resultString.isEmpty ? nil : resultString
     }
 

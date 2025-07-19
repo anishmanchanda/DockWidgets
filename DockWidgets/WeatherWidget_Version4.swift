@@ -19,8 +19,8 @@ struct WeatherWidget_Version4: View {
                         .foregroundColor(.secondary)
                 }
             } else if let weatherData = widget.weatherData {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
+                VStack(spacing: 4) {
+                    HStack{
                         if let icon = weatherData.weatherIcon {
                             Image(systemName: icon)
                                 .font(.title2)
@@ -28,11 +28,12 @@ struct WeatherWidget_Version4: View {
                         Text("\(Int(weatherData.temperature))°")
                             .font(.title2)
                             .fontWeight(.bold)
-                        Spacer()
+                        
                     }
                     Text(weatherData.condition)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    
                     
                     Text(weatherData.location)
                         .font(.caption2)

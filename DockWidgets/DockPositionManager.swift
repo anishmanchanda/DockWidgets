@@ -1,54 +1,56 @@
 import Foundation
 import Cocoa
 
+// Renamed to avoid conflict with system type
+enum DockPositionType: String {
+    case bottom
+    // Removed left and right cases as requested
+}
+
 class DockPositionManager: ObservableObject {
     static let shared = DockPositionManager()
     
-    @Published var dockPosition: DockPosition = .bottom
+    @Published var dockPosition: DockPositionType = .bottom
     @Published var dockFrame: NSRect = NSRect.zero
-    @Published var dockMagnification: CGFloat = 1.0
     
-    private var timer: Timer?
     private let defaults = UserDefaults.standard
     
     private init() {
-        startMonitoring()
-    }
-    
-    func startMonitoring() {
-        // Monitor dock position changes
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateDockInfo()
-        }
-        
-        // Initial update
         updateDockInfo()
     }
     
-    private func updateDockInfo() {
+    func updateDockInfo() {
         let dockInfo = getDockInfo()
         
-        print("🎯 DockPositionManager: Position=\(dockInfo.position), Frame=\(dockInfo.frame), Magnification=\(dockInfo.magnification)")
+        print("🎯 DockPositionManager: Frame=\(dockInfo.frame)")
         
         DispatchQueue.main.async {
-            self.dockPosition = dockInfo.position
+            self.dockPosition = .bottom // Always bottom as requested
             self.dockFrame = dockInfo.frame
-            self.dockMagnification = dockInfo.magnification
         }
     }
     
-    private func getDockInfo() -> (position: DockPosition, frame: NSRect, magnification: CGFloat) {
-        let screenFrame = NSScreen.main?.frame ?? NSRect.zero
+    private func getDockInfo() -> (position: DockPositionType, frame: NSRect) {
+        guard let screenFrame = NSScreen.main?.visibleFrame else {
+            print("🎯 DockPositionManager: No screen detected, returning zero frame.")
+            return (.bottom, NSRect.zero)
+        }
+
+        // Get dock size
+        let tileSize = getDockTileSize()
+        
         let dockDefaults = UserDefaults(suiteName: "com.apple.dock")
-        let fixedDockSize = getDockTileSize()
         let persistentApps = dockDefaults?.array(forKey: "persistent-apps")?.count ?? 0
         let persistentOthers = dockDefaults?.array(forKey: "persistent-others")?.count ?? 0
-        // +1 for trash, +1 for separator
-        let iconCount = max(persistentApps + persistentOthers + 2, 1)
-        let dockWidth = CGFloat(iconCount) * fixedDockSize
+        let iconCount = max(persistentApps + persistentOthers + 4, 1) // +4 for trash and separators
+        
+        // Calculate frame for bottom position only
+        let dockWidth = CGFloat(iconCount) * tileSize
         let dockX = (screenFrame.width - dockWidth) / 2 + screenFrame.minX
-        let dockFrame = NSRect(x: dockX, y: screenFrame.minY, width: dockWidth, height: fixedDockSize)
-        return (.bottom, dockFrame, 1.0)
+        let dockFrame = NSRect(x: dockX, y: screenFrame.minY, width: dockWidth, height: tileSize)
+        
+        print("🎯 DockPositionManager: Calculated dock frame: \(dockFrame)")
+        return (.bottom, dockFrame)
     }
     
     private func getDockTileSize() -> CGFloat {
@@ -66,7 +68,7 @@ class DockPositionManager: ObservableObject {
         if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
            let tileSize = Double(output) {
             print("🎯 DockPositionManager: Got tile size from defaults: \(tileSize)")
-            return CGFloat(tileSize)
+            return CGFloat(tileSize) + 4 // Add padding
         }
         
         // Fallback to default dock size
@@ -74,37 +76,31 @@ class DockPositionManager: ObservableObject {
         print("🎯 DockPositionManager: Using fallback tile size: \(fallbackSize)")
         return fallbackSize
     }
+    
     private func getDockScreen() -> NSScreen? {
         NSScreen.screens.first(where: { $0.frame.contains(dockFrame.origin) }) ?? NSScreen.main
     }
+    
+    // Get the left edge of the dock
+    func getDockLeftEdge() -> CGFloat {
+        return dockFrame.minX
+    }
+    
+    // Get the right edge of the dock
+    func getDockRightEdge() -> CGFloat {
+        return dockFrame.maxX
+    }
+    
     func getWidgetSafeZone() -> NSRect {
-        //let screenFrame = NSScreen.main?.frame ?? NSRect.zero
-        let screenFrame = getDockScreen()?.frame ?? NSRect.zero
+        let screenFrame = getDockScreen()?.visibleFrame ?? NSRect.zero
         let buffer: CGFloat = 20 // Buffer to avoid dock overlap
         
-        switch dockPosition {
-        case .bottom:
-            return NSRect(
-                x: screenFrame.minX,
-                y: dockFrame.maxY + buffer,
-                width: screenFrame.width,
-                height: screenFrame.height - dockFrame.height - buffer
-            )
-        case .left:
-            return NSRect(
-                x: dockFrame.maxX + buffer,
-                y: screenFrame.minY,
-                width: screenFrame.width - dockFrame.width - buffer,
-                height: screenFrame.height
-            )
-        case .right:
-            return NSRect(
-                x: screenFrame.minX,
-                y: screenFrame.minY,
-                width: screenFrame.width - dockFrame.width - buffer,
-                height: screenFrame.height
-            )
-        }
+        return NSRect(
+            x: screenFrame.minX,
+            y: dockFrame.maxY + buffer,
+            width: screenFrame.width,
+            height: screenFrame.height - dockFrame.height - buffer
+        )
     }
     
     func getDockCenterPoint() -> CGPoint {
@@ -112,9 +108,5 @@ class DockPositionManager: ObservableObject {
             x: dockFrame.midX,
             y: dockFrame.midY
         )
-    }
-    
-    deinit {
-        timer?.invalidate()
     }
 }

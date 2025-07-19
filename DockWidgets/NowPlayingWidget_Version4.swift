@@ -24,12 +24,12 @@ class NowPlayingWidget: BaseWidget {
 extension NowPlayingWidget: AppleScriptMediaControllerDelegate {
     func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
         // The view will automatically update through @ObservedObject
-        print("Widget received now playing update: \(info?.displayText ?? "No music")")
+        //print("Widget received now playing update: \(info?.displayText ?? "No music")")
     }
     
     func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool) {
         // The view will automatically update through @ObservedObject
-        print("Widget received playback state update: \(isPlaying ? "Playing" : "Paused")")
+        //print("Widget received playback state update: \(isPlaying ? "Playing" : "Paused")")
     }
 }
 
@@ -56,23 +56,7 @@ struct NowPlayingView: View {
                         .foregroundColor(.white.opacity(0.8))
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    /*
-                    if !track.album.isEmpty {
-                        Text(track.album)
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.6))
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                    }
                     
-                    // App indicator
-                    Text(track.app.displayName)
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(4)*/
                 }
             } else {
                 Text("No music playing")
@@ -119,7 +103,7 @@ struct NowPlayingView: View {
                         mediaController.nextTrack()
                     }
                 }
-                .padding(.top, 4)
+                .padding(.top, 1)
             }
         }
         .padding()

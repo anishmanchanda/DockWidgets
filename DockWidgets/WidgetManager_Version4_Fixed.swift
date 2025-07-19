@@ -12,17 +12,20 @@ class WidgetManager: ObservableObject {
     
     init(window: OverlayWindow) {
         self.window = window
+        dockPositionManager.updateDockInfo() // Update Dock info when initializing
         setupObservers()
         setupDefaultWidgets()
         startDebugTimer()
         setupMediaController()
     }
+    
     private func setupMediaController() {
         mediaController = AppleScriptMediaController()
         mediaController?.delegate = self
         mediaController?.startMonitoring()
         print("🎯 MediaController: Monitoring started")
     }
+    
     private func setupObservers() {
         // Only observe settings changes, not dock position changes
         settingsSubscription = NotificationCenter.default.publisher(for: .settingsChanged)
@@ -90,37 +93,30 @@ class WidgetManager: ObservableObject {
     }
     
     private func calculateFixedWidgetPositions(screenFrame: NSRect, dockFrame: NSRect) -> (clockPosition: CGPoint, weatherPosition: CGPoint, musicPosition: CGPoint) {
-        let widgetSpacing: CGFloat = 15
+        //let widgetSpacing: CGFloat = 15
         let widgetSize = CGSize(width: 140, height: 60)
         print("screenFrame.maxX in calculateFixedWidgetPositions: \(screenFrame.maxX)")
-print("screenFrame.maxX in calculateFixedWidgetPositions: \(screenFrame.maxX)")
- 
-
-            let verticalCenter = (dockFrame.minY + dockFrame.height) / 2
-            
-            
-            //let leftZoneCenter = screenFrame.minX + (screenFrame.width / 4)
-            //let leftZoneCenter = (screenFrame.minX + dockFrame.minX)/2
-            let leftZoneCenter = (screenFrame.maxX)/4
-            let clockPosition = CGPoint(x: leftZoneCenter-widgetSize.width, y: verticalCenter)
-            
-            // Weather and Music: positioned on the RIGHT side of the screen, well away from dock apps
-            //let rightZoneStart = screenFrame.maxX - (widgetSize.width * 2 + widgetSpacing + 50) // 50px margin from edge
-            let rightZoneStart = screenFrame.maxX - (widgetSize.width * 3)
-            let weatherX = rightZoneStart + (dockFrame.width)*3 //+ widgetSize.width / 2
-            //let musicX = rightZoneStart + widgetSize.width + widgetSpacing
-            let musicX = rightZoneStart+100
-            
-            let weatherPosition = CGPoint(x: weatherX, y: verticalCenter)
-            let musicPosition = CGPoint(x: musicX, y: verticalCenter)
-            
-            print("🎯 Bottom dock - All widgets within dock height")
-            print("   Dock frame: \(dockFrame)")
-            print("   Widget vertical center: \(verticalCenter)")
-            print("   Weather center: (\(weatherX), \(verticalCenter))")
-            print("   Music center: (\(musicX), \(verticalCenter))")
-            return (clockPosition, weatherPosition, musicPosition)
-       
+        
+        let verticalCenter = (dockFrame.minY + dockFrame.height) / 2
+        let leftZoneCenter = (screenFrame.maxX) / 4
+        let clockPosition = CGPoint(x: leftZoneCenter - widgetSize.width, y: verticalCenter)
+        
+        let rightZoneStart = dockFrame.maxX + 250
+        
+        let weatherX = rightZoneStart
+        //let musicX = weatherX + 300
+        let musicX=screenFrame.maxX - (widgetSize.width)*2
+        
+        
+        let weatherPosition = CGPoint(x: weatherX, y: verticalCenter)
+        let musicPosition = CGPoint(x: musicX, y: verticalCenter)
+        
+        print("🎯 Bottom dock - All widgets within dock height")
+        print("   Dock frame: \(dockFrame)")
+        print("   Widget vertical center: \(verticalCenter)")
+        print("   Weather center: (\(weatherX), \(verticalCenter))")
+        print("   Music center: (\(musicX), \(verticalCenter))")
+        return (clockPosition, weatherPosition, musicPosition)
     }
     
     private func updateWidgetVisibility() {
@@ -138,16 +134,17 @@ print("screenFrame.maxX in calculateFixedWidgetPositions: \(screenFrame.maxX)")
     
     private func startDebugTimer() {
         Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            print("🔍 Debug: \(self.widgets.count) widgets active, visibility: \(self.widgets.map { "\(type(of: $0)): \($0.isVisible)" })")
+            
         }
     }
 }
+
 extension WidgetManager: AppleScriptMediaControllerDelegate {
     func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
-        print("🎯 Now playing info updated: \(info?.displayText ?? "No music playing")")
+        
     }
 
     func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool) {
-        print("🎯 Playback state updated: \(isPlaying ? "Playing" : "Paused")")
+        
     }
 }
