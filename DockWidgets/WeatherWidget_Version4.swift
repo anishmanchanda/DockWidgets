@@ -2,14 +2,12 @@ import SwiftUI
 
 struct WeatherWidget_Version4: View {
     @StateObject private var widget = WeatherData_Version4()
+    //@StateObject private var settings = UserSettings.shared
     @State private var isLoading = false
     @State private var timeoutTimer: Timer?
-    @State private var customLocation: String = UserDefaults.standard.string(forKey: "customLocation") ?? "New Delhi"
-    
+    @ObservedObject private var settings = UserSettings.shared
     var body: some View {
-        print("WeatherWidget_Version4 body rendered")
-        return VStack(spacing: 8) {
-            
+        VStack(spacing: 8) {
             if isLoading {
                 HStack {
                     ProgressView()
@@ -20,7 +18,7 @@ struct WeatherWidget_Version4: View {
                 }
             } else if let weatherData = widget.weatherData {
                 VStack(spacing: 4) {
-                    HStack{
+                    HStack {
                         if let icon = weatherData.weatherIcon {
                             Image(systemName: icon)
                                 .font(.title2)
@@ -28,13 +26,10 @@ struct WeatherWidget_Version4: View {
                         Text("\(Int(weatherData.temperature))°")
                             .font(.title2)
                             .fontWeight(.bold)
-                        
                     }
                     Text(weatherData.condition)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
-                    
                     Text(weatherData.location)
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -45,10 +40,13 @@ struct WeatherWidget_Version4: View {
                     .foregroundColor(.secondary)
             }
         }
-        //.padding(12)
-        .background(Color.clear) // Completely transparent background
+        .background(Color.clear)
         .cornerRadius(8)
+        .opacity(settings.widgetOpacity)
         .onAppear {
+            loadWeatherData()
+        }
+        .onChange(of: settings.customLocation) {
             loadWeatherData()
         }
     }
@@ -66,8 +64,8 @@ struct WeatherWidget_Version4: View {
             }
         }
         
-        let useCustomLocation = UserDefaults.standard.bool(forKey: "useCustomLocation")
-        let city = useCustomLocation ? (UserDefaults.standard.string(forKey: "customLocation") ?? "New Delhi") : "New Delhi"
+        // Updated to use customLocation for fetching weather
+        let city = settings.customLocation.isEmpty ? "New Delhi" : settings.customLocation
         print("🌤️ WeatherWidget: Using city: \(city)")
         timeoutTimer?.invalidate()
         loadWeatherForCity(city)
@@ -90,7 +88,6 @@ struct WeatherWidget_Version4: View {
         }
     }
 }
-
 // MARK: - WeatherData_Version4 Class
 class WeatherData_Version4: ObservableObject {
     @Published var weatherData: WeatherData?

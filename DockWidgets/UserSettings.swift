@@ -29,13 +29,6 @@ class UserSettings: ObservableObject {
         }
     }
     
-    @Published var locationSource: LocationSource {
-        didSet {
-            userDefaults.set(locationSource.rawValue, forKey: "locationSource")
-            NotificationCenter.default.post(name: .settingsChanged, object: nil)
-        }
-    }
-    
     @Published var customLocation: String {
         didSet {
             userDefaults.set(customLocation, forKey: "customLocation")
@@ -93,8 +86,7 @@ class UserSettings: ObservableObject {
         self.showSeconds = userDefaults.object(forKey: "showSeconds") as? Bool ?? true
         
         self.temperatureUnit = TemperatureUnit(rawValue: userDefaults.string(forKey: "temperatureUnit") ?? "celsius") ?? .celsius
-        self.locationSource = LocationSource(rawValue: userDefaults.string(forKey: "locationSource") ?? "automatic") ?? .automatic
-        self.customLocation = userDefaults.string(forKey: "customLocation") ?? ""
+        self.customLocation = userDefaults.string(forKey: "customLocation") ?? "New Delhi"
         self.weatherUpdateInterval = userDefaults.object(forKey: "weatherUpdateInterval") as? Int ?? 600
         
         self.widgetOpacity = userDefaults.object(forKey: "widgetOpacity") as? Double ?? 1.0
@@ -109,8 +101,7 @@ class UserSettings: ObservableObject {
         is24HourFormat = false
         showSeconds = true
         temperatureUnit = .celsius
-        locationSource = .automatic
-        customLocation = ""
+        customLocation = "New Delhi"
         weatherUpdateInterval = 600
         widgetOpacity = 1.0
         textSize = .medium

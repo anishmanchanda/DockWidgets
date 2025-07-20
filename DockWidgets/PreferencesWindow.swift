@@ -4,13 +4,13 @@ import Cocoa
 class PreferencesWindow: NSWindow {
     init() {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
-            styleMask: [.titled, .closable, .miniaturizable],
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         
-        self.title = "DockWidgets Preferences"
+        self.title = "Preferences"
         self.center()
         self.isReleasedWhenClosed = false
         
@@ -68,44 +68,7 @@ struct PreferencesView: View {
                     // Weather Settings
                     GroupBox(label: Label("Weather Settings", systemImage: "cloud.sun")) {
                         VStack(alignment: .leading, spacing: 15) {
-                            HStack {
-                                Text("Temperature Unit:")
-                                    .frame(width: 120, alignment: .leading)
-                                Picker("Temperature Unit", selection: $settings.temperatureUnit) {
-                                    Text("Celsius (°C)").tag(TemperatureUnit.celsius)
-                                    Text("Fahrenheit (°F)").tag(TemperatureUnit.fahrenheit)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                                Spacer()
-                            }
-                            
-                            HStack {
-                                Text("Location Source:")
-                                    .frame(width: 120, alignment: .leading)
-                                Picker("Location Source", selection: $settings.locationSource) {
-                                    Text("Auto (GPS)").tag(LocationSource.automatic)
-                                    Text("Custom").tag(LocationSource.custom)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                                Spacer()
-                            }
-                            
-                            if settings.locationSource == .custom {
-                                HStack {
-                                    Text("Custom Location:")
-                                        .frame(width: 120, alignment: .leading)
-                                    TextField("Enter city name", text: $customLocation)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                                        .onSubmit {
-                                            settings.customLocation = customLocation
-                                        }
-                                    Button("Save") {
-                                        settings.customLocation = customLocation
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                }
-                            }
-                            
+
                             HStack {
                                 Text("Update Interval:")
                                     .frame(width: 120, alignment: .leading)
@@ -148,36 +111,20 @@ struct PreferencesView: View {
                         .padding()
                     }
                     
-                    // Widget Positioning
-                    GroupBox(label: Label("Widget Position", systemImage: "move.3d")) {
-                        VStack(alignment: .leading, spacing: 15) {
-                            HStack {
-                                Text("Clock Position:")
-                                    .frame(width: 120, alignment: .leading)
-                                Picker("Clock Position", selection: $settings.clockPosition) {
-                                    Text("Left").tag(WidgetPosition.left)
-                                    Text("Center").tag(WidgetPosition.center)
-                                    Text("Right").tag(WidgetPosition.right)
+                    // Custom Location
+                    GroupBox(label: Label("Custom Location", systemImage: "mappin.and.ellipse")) {
+                        HStack {
+                            Text("Location:")
+                                .frame(width: 120, alignment: .leading)
+                            TextField("Enter city name", text: $customLocation)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .onSubmit {
+                                    settings.customLocation = customLocation
                                 }
-                                .pickerStyle(SegmentedPickerStyle())
-                                Spacer()
+                            Button("Save") {
+                                settings.customLocation = customLocation
                             }
-                            
-                            HStack {
-                                Text("Show Weather:")
-                                    .frame(width: 120, alignment: .leading)
-                                Toggle("", isOn: $settings.showWeather)
-                                    .toggleStyle(SwitchToggleStyle())
-                                Spacer()
-                            }
-                            
-                            HStack {
-                                Text("Show Music:")
-                                    .frame(width: 120, alignment: .leading)
-                                Toggle("", isOn: $settings.showMusic)
-                                    .toggleStyle(SwitchToggleStyle())
-                                Spacer()
-                            }
+                            .buttonStyle(.borderedProminent)
                         }
                         .padding()
                     }
@@ -204,10 +151,11 @@ struct PreferencesView: View {
             }
             .padding()
         }
-        .frame(width: 500, height: 400)
+        //.frame(width: 500, height: 400)
         .onAppear {
             customLocation = settings.customLocation
         }
+        .frame(minWidth: 500, minHeight: 800)
     }
 }
 
@@ -215,11 +163,6 @@ struct PreferencesView: View {
 enum TemperatureUnit: String, CaseIterable {
     case celsius = "celsius"
     case fahrenheit = "fahrenheit"
-}
-
-enum LocationSource: String, CaseIterable {
-    case automatic = "automatic"
-    case custom = "custom"
 }
 
 enum TextSize: String, CaseIterable {

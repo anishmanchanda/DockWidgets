@@ -72,31 +72,31 @@ class WeatherAPI {
             completion(.failure(.invalidURL))
             return
         }
-        
+
         let urlString = "\(baseURL)?q=\(encodedCity)&appid=\(apiKey)&units=metric"
-        
+
         print("🌤️ Weather API URL (city): \(urlString)")
-        
+
         guard let url = URL(string: urlString) else {
             completion(.failure(.invalidURL))
             return
         }
-        
+
         var request = URLRequest(url: url)
         request.timeoutInterval = 10.0
-        
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("❌ Network error: \(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
             }
-            
+
             guard let data = data else {
                 completion(.failure(.noData))
                 return
             }
-            
+
             do {
                 let weatherResponse = try JSONDecoder().decode(WeatherResponse.self, from: data)
                 let weatherData = WeatherData(

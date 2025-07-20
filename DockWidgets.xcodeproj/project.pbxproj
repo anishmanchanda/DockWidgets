@@ -57,16 +57,6 @@
 			path = DockWidgets;
 			sourceTree = "<group>";
 		};
-		DC1500D72E1FC02900AA8D0E /* DockWidgetsTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DockWidgetsTests;
-			sourceTree = "<group>";
-		};
-		DC1500E12E1FC02900AA8D0E /* DockWidgetsUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DockWidgetsUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,8 +91,6 @@
 			isa = PBXGroup;
 			children = (
 				DC1500C82E1FC02700AA8D0E /* DockWidgets */,
-				DC1500D72E1FC02900AA8D0E /* DockWidgetsTests */,
-				DC1500E12E1FC02900AA8D0E /* DockWidgetsUITests */,
 				DC1500F12E1FC0DD00AA8D0E /* Frameworks */,
 				DC1500C72E1FC02700AA8D0E /* Products */,
 			);
@@ -166,9 +154,6 @@
 			dependencies = (
 				DC1500D62E1FC02900AA8D0E /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				DC1500D72E1FC02900AA8D0E /* DockWidgetsTests */,
-			);
 			name = DockWidgetsTests;
 			packageProductDependencies = (
 			);
@@ -188,9 +173,6 @@
 			);
 			dependencies = (
 				DC1500E02E1FC02900AA8D0E /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				DC1500E12E1FC02900AA8D0E /* DockWidgetsUITests */,
 			);
 			name = DockWidgetsUITests;
 			packageProductDependencies = (
