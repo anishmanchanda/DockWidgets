@@ -7,21 +7,20 @@ class FlipClockWidget: BaseWidget {
     private let settings = UserSettings.shared
     private var settingsSubscription: AnyCancellable?
     
-    override init(position: CGPoint, size: CGSize = CGSize(width: 160, height: 50)) {
+    override init(position: CGPoint, size: CGSize = CGSize(width: 180, height: 55)) {
         super.init(position: position, size: size)
         print("🕰️ FlipClockWidget initialized at position \(position) with size \(size)")
         startTimer()
         setupSettingsObserver()
-        updateTime()  // Initial time update
+        updateTime()
     }
     
     private func setupSettingsObserver() {
-        // Disable settings observer to prevent repositioning
-        // settingsSubscription = NotificationCenter.default.publisher(for: .settingsChanged)
-        //     .sink { [weak self] _ in
-        //         self?.updateTime()
-        //     }
-        print("🕰️ FlipClockWidget: Settings observer disabled for stability")
+        settingsSubscription = NotificationCenter.default.publisher(for: .settingsChanged)
+            .sink { [weak self] _ in
+                self?.updateTime()
+            }
+        print("🕰️ FlipClockWidget: Settings observer enabled")
     }
     
     private func startTimer() {
@@ -49,79 +48,178 @@ struct FlipClockView: View {
     @ObservedObject private var settings = UserSettings.shared
     
     var body: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 3) {
             ForEach(Array(widget.currentTime.enumerated()), id: \.offset) { index, character in
                 if character == ":" {
-                    Text(":")
-                        .font(.system(size: getFontSize(), weight: .bold, design: .default))
-                        .foregroundColor(.white)
-                        .shadow(color: .black, radius: 2, x: 0, y: 0)  // Add shadow for better readability
+                    ColonView()
+                } else if character == " " {
+                    Spacer()
+                        .frame(width: 6)
                 } else {
-                    FlipDigitView(character: String(character))
+                    FlipCard(character: String(character))
                 }
             }
         }
-        .padding(6)
+        .padding(8)
         .opacity(settings.widgetOpacity)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.clear)  // Completely transparent background
-        )
-        
         .onAppear {
             print("🕰️ FlipClockView appeared with time: \(widget.currentTime)")
         }
     }
+}
+
+struct ColonView: View {
+    @State private var isPulsing = false
     
-    private func getFontSize() -> CGFloat {
-        // Scale font size based on widget height - increased base size
-        let baseSize: CGFloat = 20  // Increased from 16 to 20
-        let scaleFactor = widget.size.height / 40  // 40 is our base height
-        return max(baseSize * scaleFactor, 16)  // Minimum 16pt font
+    var body: some View {
+        VStack(spacing: 4) {
+            Circle()
+                .fill(Color.white)
+                .frame(width: 3, height: 3)
+                .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 0)
+            Circle()
+                .fill(Color.white)
+                .frame(width: 3, height: 3)
+                .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 0)
+        }
+        .frame(width: 6, height: 36)
+        .opacity(isPulsing ? 0.6 : 1.0)
+        .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isPulsing)
+        .onAppear {
+            isPulsing = true
+        }
     }
 }
 
-struct FlipDigitView: View {
-    let character: String
-    @State private var isFlipping = false
-    @State private var previousCharacter: String = ""
-    @ObservedObject private var settings = UserSettings.shared
+class FlipCardViewModel: ObservableObject {
+    @Published var currentText: String = ""
+    @Published var newText: String?
+    @Published var oldText: String?
+    @Published var animateTop: Bool = false
+    @Published var animateBottom: Bool = false
     
-    var body: some View {
-        ZStack {
-            // Background - completely transparent
-            RoundedRectangle(cornerRadius: 4)
-                .fill(Color.clear)
-                .frame(width: 22, height: 30)  // Increased size for larger font
-            
-            // Flip animation
-            Text(character)
-                .font(.system(size: getFontSize(), weight: .bold, design: .default))
-                .foregroundColor(.white)
-                .shadow(color: .black, radius: 2, x: 0, y: 0)  // Enhanced shadow for better readability
-                .rotation3DEffect(
-                    .degrees(isFlipping ? 180 : 0),
-                    axis: (x: 1, y: 0, z: 0)
-                )
-                .animation(.easeInOut(duration: 0.3), value: isFlipping)
+    func updateText(to newValue: String) {
+        guard newValue != currentText else { return }
+        
+        oldText = currentText
+        newText = newValue
+        animateTop = false
+        animateBottom = false
+        
+        // First phase: Top half flips down
+        withAnimation(.easeIn(duration: 0.2)) {
+            animateTop = true
         }
-        .onChange(of: character) { oldValue, newValue in
-            if newValue != previousCharacter {
-                withAnimation {
-                    isFlipping = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    withAnimation {
-                        isFlipping = false
-                    }
-                }
-                previousCharacter = newValue
+        
+        // Second phase: Bottom half flips up (starts slightly before top finishes)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                self.animateBottom = true
+            }
+            
+            // Reset after animation completes
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.currentText = newValue
+                self.oldText = nil
+                self.newText = nil
+                self.animateTop = false
+                self.animateBottom = false
             }
         }
     }
+}
+
+struct FlipCard: View {
+    let character: String
+    @StateObject private var viewModel = FlipCardViewModel()
     
-    private func getFontSize() -> CGFloat {
-        // Scale font size based on available space - increased base size
-        return 20  // Increased base font size from 16 to 20
+    var body: some View {
+        VStack(spacing: 0) {
+            // Top half
+            ZStack {
+                // New text (appears when top starts flipping)
+                SingleFlipView(text: viewModel.newText ?? viewModel.currentText, type: .top)
+                    .opacity(viewModel.animateTop ? 1 : 0)
+                
+                // Old text (disappears as top flips)
+                SingleFlipView(text: viewModel.oldText ?? viewModel.currentText, type: .top)
+                    .rotation3DEffect(
+                        .degrees(viewModel.animateTop ? -90 : 0),
+                        axis: (x: 1, y: 0, z: 0),
+                        anchor: .bottom,
+                        perspective: 0.5
+                    )
+                    .opacity(viewModel.animateTop ? 0 : 1)
+            }
+            
+            // Separator line
+            Rectangle()
+                .fill(Color.black.opacity(0.4))
+                .frame(width: 26, height: 0.8)
+            
+            // Bottom half
+            ZStack {
+                // Old text (visible until bottom starts flipping)
+                SingleFlipView(text: viewModel.oldText ?? viewModel.currentText, type: .bottom)
+                    .opacity(viewModel.animateBottom ? 0 : 1)
+                
+                // New text (appears as bottom flips up)
+                SingleFlipView(text: viewModel.newText ?? viewModel.currentText, type: .bottom)
+                    .rotation3DEffect(
+                        .degrees(viewModel.animateBottom ? 0 : 90),
+                        axis: (x: 1, y: 0, z: 0),
+                        anchor: .top,
+                        perspective: 0.5
+                    )
+                    .opacity(viewModel.animateBottom ? 1 : 0)
+            }
+        }
+        .onChange(of: character) { oldValue, newValue in
+            viewModel.updateText(to: newValue)
+        }
+        .onAppear {
+            viewModel.currentText = character
+        }
+    }
+}
+
+struct SingleFlipView: View {
+    let text: String
+    let type: FlipType
+    
+    enum FlipType {
+        case top
+        case bottom
+    }
+    
+    var body: some View {
+        ZStack {
+            // Background
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.12, green: 0.12, blue: 0.12),
+                    Color(red: 0.08, green: 0.08, blue: 0.08)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(width: 26, height: 18)
+            .cornerRadius(type == .top ? 4 : 0)
+            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: type == .top ? 4 : 0)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+            )
+            
+            // Text positioned to show correct half
+            Text(text)
+                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 0.5)
+                .frame(width: 26, height: 36)
+                .offset(y: type == .top ? 9 : -9)
+        }
+        .frame(width: 26, height: 18)
+        .clipped()
     }
 }
