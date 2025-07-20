@@ -251,6 +251,9 @@ class AppleScriptMediaController: ObservableObject {
     
     func playPause() {
         print("playPause called")
+        isPlaying.toggle()
+            delegate?.mediaController(self, didUpdatePlaybackState: isPlaying)
+        
         switch currentApp {
             
         case .music:
