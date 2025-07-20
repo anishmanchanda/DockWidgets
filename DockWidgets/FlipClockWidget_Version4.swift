@@ -144,10 +144,10 @@ struct FlipCard: View {
                 // Old text (disappears as top flips)
                 SingleFlipView(text: viewModel.oldText ?? viewModel.currentText, type: .top)
                     .rotation3DEffect(
-                        .degrees(viewModel.animateTop ? -90 : 0),
+                        .degrees(viewModel.animateTop ? -89.9 : 0),
                         axis: (x: 1, y: 0, z: 0),
                         anchor: .bottom,
-                        perspective: 0.5
+                        perspective: 0.8
                     )
                     .opacity(viewModel.animateTop ? 0 : 1)
             }
@@ -166,10 +166,10 @@ struct FlipCard: View {
                 // New text (appears as bottom flips up)
                 SingleFlipView(text: viewModel.newText ?? viewModel.currentText, type: .bottom)
                     .rotation3DEffect(
-                        .degrees(viewModel.animateBottom ? 0 : 90),
+                        .degrees(viewModel.animateBottom ? 0 : 89.9),
                         axis: (x: 1, y: 0, z: 0),
                         anchor: .top,
-                        perspective: 0.5
+                        perspective: 0.8
                     )
                     .opacity(viewModel.animateBottom ? 1 : 0)
             }
