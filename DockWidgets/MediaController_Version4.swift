@@ -198,13 +198,9 @@ class AppleScriptMediaController: ObservableObject {
         if application "Spotify" is running then
             tell application "Spotify"
                 try
-                    if current track exists then
-                        set trackName to name of current track
-                        set artistName to artist of current track
-                        return trackName & "|||" & artistName
-                    else
-                        return "no track"
-                    end if
+                    set trackName to name of current track
+                    set artistName to artist of current track
+                    return trackName & "|||" & artistName
                 on error errMsg
                     return "error: " & errMsg
                 end try
@@ -218,7 +214,7 @@ class AppleScriptMediaController: ObservableObject {
             return nil
         }
         
-        if result == "no track" || result.hasPrefix("error") || result == "not running" {
+        if result == "not running" || result.hasPrefix("error") {
             print("Spotify info: \(result)")
             return nil
         }
