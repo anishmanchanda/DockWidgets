@@ -101,11 +101,11 @@ class WidgetManager: ObservableObject {
         let leftZoneCenter = (screenFrame.maxX) / 4
         let clockPosition = CGPoint(x: leftZoneCenter - widgetSize.width, y: verticalCenter)
         
-        let rightZoneStart = dockFrame.maxX + 250
+        let rightZoneStart = dockFrame.maxX
         
-        let weatherX = rightZoneStart
+        let weatherX = rightZoneStart + 10
         //let musicX = weatherX + 300
-        let musicX=screenFrame.maxX - (widgetSize.width)*2
+        let musicX=rightZoneStart + ((screenFrame.maxX-rightZoneStart)/2)
         
         
         let weatherPosition = CGPoint(x: weatherX, y: verticalCenter)
@@ -113,6 +113,7 @@ class WidgetManager: ObservableObject {
         
         print("🎯 Bottom dock - All widgets within dock height")
         print("   Dock frame: \(dockFrame)")
+        print("   Dock frame.maxX: \(dockFrame.maxX)")
         print("   Widget vertical center: \(verticalCenter)")
         print("   Weather center: (\(weatherX), \(verticalCenter))")
         print("   Music center: (\(musicX), \(verticalCenter))")

@@ -39,7 +39,7 @@ struct NowPlayingView: View {
     init(mediaController: AppleScriptMediaController?) {
         self.mediaController = mediaController ?? AppleScriptMediaController()
     }
-    
+    @State private var shouldRotate: Bool = false
     var body: some View {
         VStack(spacing: 5) {
             // Track Information

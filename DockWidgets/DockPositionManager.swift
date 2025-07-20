@@ -38,11 +38,11 @@ class DockPositionManager: ObservableObject {
 
         // Get dock size
         let tileSize = getDockTileSize()
-        
+        print("tile size is: \(tileSize)")
         let dockDefaults = UserDefaults(suiteName: "com.apple.dock")
         let persistentApps = dockDefaults?.array(forKey: "persistent-apps")?.count ?? 0
         let persistentOthers = dockDefaults?.array(forKey: "persistent-others")?.count ?? 0
-        let iconCount = max(persistentApps + persistentOthers + 4, 1) // +4 for trash and separators
+        let iconCount = max(persistentApps + persistentOthers + 8, 1) // +4 for trash and separators
         
         // Calculate frame for bottom position only
         let dockWidth = CGFloat(iconCount) * tileSize
