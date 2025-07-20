@@ -13,7 +13,7 @@ class WidgetManager: ObservableObject {
     init(window: OverlayWindow) {
         self.window = window
         dockPositionManager.updateDockInfo() // Update Dock info when initializing
-        setupObservers()
+        
         setupDefaultWidgets()
         startDebugTimer()
         setupMediaController()
@@ -26,15 +26,7 @@ class WidgetManager: ObservableObject {
         print("🎯 MediaController: Monitoring started")
     }
     
-    private func setupObservers() {
-        // Only observe settings changes, not dock position changes
-        settingsSubscription = NotificationCenter.default.publisher(for: .settingsChanged)
-            .sink { [weak self] _ in
-                self?.updateWidgetVisibility()
-            }
-        
-        print("🎯 WidgetManager: Dynamic dock adjustment disabled, only settings changes monitored")
-    }
+    
     
     private func setupDefaultWidgets() {
         // Create widgets once with fixed positioning
@@ -64,14 +56,14 @@ class WidgetManager: ObservableObject {
             position: positions.weatherPosition,
             size: widgetSize
         )
-        weatherWidget.isVisible = settings.showWeather
+        //weatherWidget.isVisible = settings.showWeather
         widgets.append(weatherWidget)
         
         let musicWidget = NowPlayingWidget(
             position: positions.musicPosition,
             size: widgetSize
         )
-        musicWidget.isVisible = settings.showMusic
+        //musicWidget.isVisible = settings.showMusic
         widgets.append(musicWidget)
     }
     
@@ -89,19 +81,6 @@ class WidgetManager: ObservableObject {
         let musicPosition = CGPoint(x: musicX, y: verticalCenter)
         
         return (clockPosition, weatherPosition, musicPosition)
-    }
-    
-    private func updateWidgetVisibility() {
-        // Only update visibility, not positions
-        for widget in widgets {
-            if widget is WeatherWidget {
-                widget.isVisible = settings.showWeather
-            } else if widget is NowPlayingWidget {
-                widget.isVisible = settings.showMusic
-            }
-        }
-        
-        print("🎯 Updated widget visibility - Weather: \(settings.showWeather), Music: \(settings.showMusic)")
     }
     
     private func startDebugTimer() {

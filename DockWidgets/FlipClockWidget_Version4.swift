@@ -62,6 +62,7 @@ struct FlipClockView: View {
             }
         }
         .padding(6)
+        .opacity(settings.widgetOpacity)
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color.clear)  // Completely transparent background

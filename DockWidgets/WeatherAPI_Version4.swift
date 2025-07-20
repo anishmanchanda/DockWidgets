@@ -72,31 +72,31 @@ class WeatherAPI {
             completion(.failure(.invalidURL))
             return
         }
-
+        
         let urlString = "\(baseURL)?q=\(encodedCity)&appid=\(apiKey)&units=metric"
-
+        
         print("🌤️ Weather API URL (city): \(urlString)")
-
+        
         guard let url = URL(string: urlString) else {
             completion(.failure(.invalidURL))
             return
         }
-
+        
         var request = URLRequest(url: url)
         request.timeoutInterval = 10.0
-
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 print("❌ Network error: \(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
             }
-
+            
             guard let data = data else {
                 completion(.failure(.noData))
                 return
             }
-
+            
             do {
                 let weatherResponse = try JSONDecoder().decode(WeatherResponse.self, from: data)
                 let weatherData = WeatherData(
@@ -118,8 +118,12 @@ class WeatherAPI {
     }
     
     private func getWeatherIcon(for condition: String) -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let isNight = hour < 6 || hour >= 18 // Night is between 6 PM and 6 AM
+        
         switch condition.lowercased() {
-        case "clear": return "sun.max.fill"
+        case "clear":
+            return isNight ? "moon.stars.fill" : "sun.max.fill"
         case "clouds": return "cloud.fill"
         case "rain": return "cloud.rain.fill"
         case "snow": return "snow"

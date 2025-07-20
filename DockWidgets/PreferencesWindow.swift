@@ -4,7 +4,7 @@ import Cocoa
 class PreferencesWindow: NSWindow {
     init() {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 550),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -23,21 +23,80 @@ class PreferencesWindow: NSWindow {
 struct PreferencesView: View {
     @StateObject private var settings = UserSettings.shared
     @State private var customLocation = ""
+    @State private var selectedTab = 0
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Tab Bar
+            HStack(spacing: 0) {
+                Spacer()
+                TabButton(
+                    title: "General",
+                    systemImage: "gearshape.fill",
+                    isSelected: selectedTab == 0
+                ) {
+                    selectedTab = 0
+                }
+                
+                TabButton(
+                    title: "Info",
+                    systemImage: "info.circle",
+                    isSelected: selectedTab == 1
+                ) {
+                    selectedTab = 1
+                }
+                
+                Spacer()
+            }
+            .padding(.top, 12)
+            
+            Divider()
+                .padding(.top, 4)
+            
+            // Tab Content
+            if selectedTab == 0 {
+                GeneralTabView(settings: settings, customLocation: $customLocation)
+            } else {
+                InfoTabView()
+            }
+        }
+        .frame(minWidth: 500, minHeight: 550)
+        .onAppear {
+            customLocation = settings.customLocation
+        }
+    }
+}
+
+struct TabButton: View {
+    let title: String
+    let systemImage: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 24))
+                Text(title)
+                    .font(.caption)
+            }
+            .frame(width: 80)
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PlainButtonStyle())
+        .background(isSelected ? Color.gray.opacity(0.2) : Color.clear)
+        .cornerRadius(8)
+    }
+}
+
+struct GeneralTabView: View {
+    @ObservedObject var settings: UserSettings
+    @Binding var customLocation: String
     
     var body: some View {
         VStack(spacing: 20) {
-            // Header
-            HStack {
-                Image(systemName: "gear")
-                    .font(.title)
-                    .foregroundColor(.blue)
-                Text("DockWidgets Preferences")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Spacer()
-            }
-            .padding(.horizontal)
-            
             ScrollView {
                 VStack(alignment: .leading, spacing: 25) {
                     // Clock Settings
@@ -53,7 +112,7 @@ struct PreferencesView: View {
                                 .pickerStyle(SegmentedPickerStyle())
                                 Spacer()
                             }
-                            
+
                             HStack {
                                 Text("Show Seconds:")
                                     .frame(width: 100, alignment: .leading)
@@ -64,11 +123,10 @@ struct PreferencesView: View {
                         }
                         .padding()
                     }
-                    
+
                     // Weather Settings
                     GroupBox(label: Label("Weather Settings", systemImage: "cloud.sun")) {
                         VStack(alignment: .leading, spacing: 15) {
-
                             HStack {
                                 Text("Update Interval:")
                                     .frame(width: 120, alignment: .leading)
@@ -81,10 +139,24 @@ struct PreferencesView: View {
                                 .pickerStyle(MenuPickerStyle())
                                 Spacer()
                             }
+
+                            HStack {
+                                Text("Location:")
+                                    .frame(width: 120, alignment: .leading)
+                                TextField("Enter city name", text: $customLocation)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .onSubmit {
+                                        settings.customLocation = customLocation
+                                    }
+                                Button("Save") {
+                                    settings.customLocation = customLocation
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
                         }
                         .padding()
                     }
-                    
+
                     // Widget Appearance
                     GroupBox(label: Label("Widget Appearance", systemImage: "paintbrush")) {
                         VStack(alignment: .leading, spacing: 15) {
@@ -95,55 +167,18 @@ struct PreferencesView: View {
                                 Text("\(Int(settings.widgetOpacity * 100))%")
                                     .frame(width: 40)
                             }
-                            
-                            HStack {
-                                Text("Text Size:")
-                                    .frame(width: 120, alignment: .leading)
-                                Picker("Text Size", selection: $settings.textSize) {
-                                    Text("Small").tag(TextSize.small)
-                                    Text("Medium").tag(TextSize.medium)
-                                    Text("Large").tag(TextSize.large)
-                                }
-                                .pickerStyle(SegmentedPickerStyle())
-                                Spacer()
-                            }
-                        }
-                        .padding()
-                    }
-                    
-                    // Custom Location
-                    GroupBox(label: Label("Custom Location", systemImage: "mappin.and.ellipse")) {
-                        HStack {
-                            Text("Location:")
-                                .frame(width: 120, alignment: .leading)
-                            TextField("Enter city name", text: $customLocation)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .onSubmit {
-                                    settings.customLocation = customLocation
-                                }
-                            Button("Save") {
-                                settings.customLocation = customLocation
-                            }
-                            .buttonStyle(.borderedProminent)
                         }
                         .padding()
                     }
                 }
                 .padding()
             }
-            
+
             // Footer buttons
             HStack {
-                Button("Reset to Defaults") {
-                    settings.resetToDefaults()
-                    customLocation = settings.customLocation
-                }
-                .buttonStyle(.bordered)
-                
                 Spacer()
-                
                 Button("Close") {
-                    if let window = NSApplication.shared.windows.first(where: { $0.title == "DockWidgets Preferences" }) {
+                    if let window = NSApplication.shared.windows.first(where: { $0.title == "Preferences" }) {
                         window.close()
                     }
                 }
@@ -151,22 +186,74 @@ struct PreferencesView: View {
             }
             .padding()
         }
-        //.frame(width: 500, height: 400)
-        .onAppear {
-            customLocation = settings.customLocation
+    }
+}
+
+struct InfoTabView: View {
+    var body: some View {
+        VStack(spacing: 20) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 25) {
+                    GroupBox(label: Label("About DockWidgets", systemImage: "info.circle")) {
+                        VStack(alignment: .leading, spacing: 15) {
+                            HStack {
+                                Image(nsImage: NSApp.applicationIconImage)
+                                    .resizable()
+                                    .frame(width: 64, height: 64)
+                                
+                                VStack(alignment: .leading) {
+                                    Text("DockWidgets")
+                                        .font(.title)
+                                        .bold()
+                                    Text("Version 1.0")
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
+                            Divider()
+                            
+                            Text("DockWidgets is a customizable widget application for macOS that utilises the unoccupied space at the sides of the dock with transparent interactive tools.")
+                                .lineLimit(nil)
+                                .fixedSize(horizontal: false, vertical: true)
+                            
+                            Text("© 2025 DockWidgets \n  -Anish Manchanda")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                        }
+                        .padding()
+                    }
+                }
+                .padding()
+            }
+            
+            Spacer()
+            
+            // Footer buttons
+            HStack {
+                Spacer()
+                Button("Close") {
+                    if let window = NSApplication.shared.windows.first(where: { $0.title == "Preferences" }) {
+                        window.close()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
         }
-        .frame(minWidth: 500, minHeight: 800)
     }
 }
 
 // MARK: - Settings Enums
-enum TemperatureUnit: String, CaseIterable {
-    case celsius = "celsius"
-    case fahrenheit = "fahrenheit"
-}
 
 enum TextSize: String, CaseIterable {
     case small = "small"
     case medium = "medium"
     case large = "large"
+}
+
+enum WidgetPosition: String, CaseIterable {
+    case left = "left"
+    case center = "center"
+    case right = "right"
 }
