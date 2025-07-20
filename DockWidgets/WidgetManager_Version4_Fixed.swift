@@ -47,20 +47,12 @@ class WidgetManager: ObservableObject {
         
         let screenFrame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
         let dockFrame = dockPositionManager.dockFrame
-        print("right edge of dock: \(dockFrame.maxX)")
-        print("left edge of dock: \(dockFrame.minX)")
-        print("🎯 Screen frame: \(screenFrame)")
-        print("🎯 Dock frame: \(dockFrame)")
         
-        // Calculate positions based on dock position
-        print("screenFrame: \(screenFrame)")
-        print("screenFrame.maxX: \(screenFrame.maxX)")
         let positions = calculateFixedWidgetPositions(screenFrame: screenFrame, dockFrame: dockFrame)
         
-        // Fixed widget dimensions (no dynamic sizing based on dock magnification)
         let widgetSize = CGSize(width: 140, height: 60)
         
-        // Create clock widget - always visible
+        // Reintroduce clock widget creation logic
         let clockWidget = FlipClockWidget(
             position: positions.clockPosition,
             size: widgetSize
@@ -68,7 +60,6 @@ class WidgetManager: ObservableObject {
         clockWidget.isVisible = true
         widgets.append(clockWidget)
         
-        // Create weather widget - visibility based on settings
         let weatherWidget = WeatherWidget(
             position: positions.weatherPosition,
             size: widgetSize
@@ -76,47 +67,27 @@ class WidgetManager: ObservableObject {
         weatherWidget.isVisible = settings.showWeather
         widgets.append(weatherWidget)
         
-        // Create music widget - visibility based on settings
         let musicWidget = NowPlayingWidget(
             position: positions.musicPosition,
             size: widgetSize
         )
         musicWidget.isVisible = settings.showMusic
         widgets.append(musicWidget)
-        
-        print("🎯 Created widgets with fixed positions:")
-        print("Weather widget position: \(weatherWidget.position), size: \(weatherWidget.size)")
-        print("Music widget position: \(musicWidget.position), size: \(musicWidget.size)")
-        for (index, widget) in widgets.enumerated() {
-            print("   Widget \(index): position=\(widget.position), size=\(widget.size), visible=\(widget.isVisible)")
-        }
     }
     
     private func calculateFixedWidgetPositions(screenFrame: NSRect, dockFrame: NSRect) -> (clockPosition: CGPoint, weatherPosition: CGPoint, musicPosition: CGPoint) {
-        //let widgetSpacing: CGFloat = 15
         let widgetSize = CGSize(width: 140, height: 60)
-        print("screenFrame.maxX in calculateFixedWidgetPositions: \(screenFrame.maxX)")
-        
         let verticalCenter = (dockFrame.minY + dockFrame.height) / 2
         let leftZoneCenter = (screenFrame.maxX) / 4
         let clockPosition = CGPoint(x: leftZoneCenter - widgetSize.width, y: verticalCenter)
         
         let rightZoneStart = dockFrame.maxX
-        
         let weatherX = rightZoneStart + 10
-        //let musicX = weatherX + 300
-        let musicX=rightZoneStart + ((screenFrame.maxX-rightZoneStart)/2)
-        
+        let musicX = rightZoneStart + ((screenFrame.maxX - rightZoneStart) / 2)
         
         let weatherPosition = CGPoint(x: weatherX, y: verticalCenter)
         let musicPosition = CGPoint(x: musicX, y: verticalCenter)
         
-        print("🎯 Bottom dock - All widgets within dock height")
-        print("   Dock frame: \(dockFrame)")
-        print("   Dock frame.maxX: \(dockFrame.maxX)")
-        print("   Widget vertical center: \(verticalCenter)")
-        print("   Weather center: (\(weatherX), \(verticalCenter))")
-        print("   Music center: (\(musicX), \(verticalCenter))")
         return (clockPosition, weatherPosition, musicPosition)
     }
     

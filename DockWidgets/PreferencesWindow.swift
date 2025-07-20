@@ -170,9 +170,3 @@ enum TextSize: String, CaseIterable {
     case medium = "medium"
     case large = "large"
 }
-
-enum WidgetPosition: String, CaseIterable {
-    case left = "left"
-    case center = "center"
-    case right = "right"
-}

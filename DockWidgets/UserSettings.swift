@@ -58,14 +58,6 @@ class UserSettings: ObservableObject {
         }
     }
     
-    // Widget Position
-    @Published var clockPosition: WidgetPosition {
-        didSet {
-            userDefaults.set(clockPosition.rawValue, forKey: "clockPosition")
-            NotificationCenter.default.post(name: .settingsChanged, object: nil)
-        }
-    }
-    
     @Published var showWeather: Bool {
         didSet {
             userDefaults.set(showWeather, forKey: "showWeather")
@@ -92,7 +84,6 @@ class UserSettings: ObservableObject {
         self.widgetOpacity = userDefaults.object(forKey: "widgetOpacity") as? Double ?? 1.0
         self.textSize = TextSize(rawValue: userDefaults.string(forKey: "textSize") ?? "medium") ?? .medium
         
-        self.clockPosition = WidgetPosition(rawValue: userDefaults.string(forKey: "clockPosition") ?? "left") ?? .left
         self.showWeather = userDefaults.object(forKey: "showWeather") as? Bool ?? true
         self.showMusic = userDefaults.object(forKey: "showMusic") as? Bool ?? true
     }
@@ -105,7 +96,6 @@ class UserSettings: ObservableObject {
         weatherUpdateInterval = 600
         widgetOpacity = 1.0
         textSize = .medium
-        clockPosition = .left
         showWeather = true
         showMusic = true
     }
