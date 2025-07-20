@@ -20,7 +20,9 @@ class NowPlayingWidget: BaseWidget {
     }
 }
 
+
 // MARK: - Media Controller Delegate
+
 extension NowPlayingWidget: AppleScriptMediaControllerDelegate {
     func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
         // The view will automatically update through @ObservedObject
@@ -35,7 +37,7 @@ extension NowPlayingWidget: AppleScriptMediaControllerDelegate {
 
 struct NowPlayingView: View {
     @ObservedObject var mediaController: AppleScriptMediaController
-    
+    @ObservedObject private var settings = UserSettings.shared
     init(mediaController: AppleScriptMediaController?) {
         self.mediaController = mediaController ?? AppleScriptMediaController()
     }
@@ -107,6 +109,7 @@ struct NowPlayingView: View {
             }
         }
         .padding()
+        .opacity(settings.widgetOpacity)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear) // Completely transparent background
         .cornerRadius(8)

@@ -66,7 +66,7 @@ struct FlipClockView: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color.clear)  // Completely transparent background
         )
-        .opacity(settings.widgetOpacity)
+        
         .onAppear {
             print("🕰️ FlipClockView appeared with time: \(widget.currentTime)")
         }
