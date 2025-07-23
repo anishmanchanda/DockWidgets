@@ -40,11 +40,11 @@ class ViewController: NSViewController {
 
 extension ViewController: AppleScriptMediaControllerDelegate {
     func mediaController(_ controller: AppleScriptMediaController, didUpdateNowPlaying info: NowPlayingInfo?) {
-        print("Now playing info updated: \(info?.displayText ?? "No music playing")")
+        //print("Now playing info updated: \(info?.displayText ?? "No music playing")")
     }
 
     func mediaController(_ controller: AppleScriptMediaController, didUpdatePlaybackState isPlaying: Bool) {
-        print("Playback state updated: \(isPlaying ? "Playing" : "Paused")")
+        //print("Playback state updated: \(isPlaying ? "Playing" : "Paused")")
     }
 }
 
@@ -93,7 +93,7 @@ class AppleScriptMediaController: ObservableObject {
         //executeAppleScript(spotifyPermissionScript)
     }
     func startMonitoring() {
-        print("startMonitoring called")
+        //print("startMonitoring called")
         updateTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             self?.updateNowPlaying()
         }
@@ -107,7 +107,7 @@ class AppleScriptMediaController: ObservableObject {
     
     private func updateNowPlaying() {
         // Check Apple Music first
-        print("updateNowPlaying called")
+        //print("updateNowPlaying called")
         if let musicInfo = getMusicInfo() {
             currentTrack = musicInfo
             currentApp = .music
@@ -164,7 +164,7 @@ class AppleScriptMediaController: ObservableObject {
         }
         
         if result == "no track" || result.hasPrefix("error") || result == "not running" {
-            print("Music info: \(result)")
+            //print("Music info: \(result)")
             return nil
         }
         
@@ -215,7 +215,7 @@ class AppleScriptMediaController: ObservableObject {
         }
         
         if result == "not running" || result.hasPrefix("error") {
-            print("Spotify info: \(result)")
+            //print("Spotify info: \(result)")
             return nil
         }
         
@@ -246,7 +246,7 @@ class AppleScriptMediaController: ObservableObject {
     // MARK: - Media Controls
     
     func playPause() {
-        print("playPause called")
+        //print("playPause called")
         isPlaying.toggle()
             delegate?.mediaController(self, didUpdatePlaybackState: isPlaying)
         
@@ -288,11 +288,11 @@ class AppleScriptMediaController: ObservableObject {
     
     @discardableResult
     private func executeAppleScript(_ script: String) -> String? {
-        print("Executing AppleScript:")
+        //print("Executing AppleScript:")
         
         // Create the AppleScript
         guard let appleScript = NSAppleScript(source: script) else {
-            print("Failed to create AppleScript")
+            //print("Failed to create AppleScript")
             return nil
         }
         
@@ -302,13 +302,13 @@ class AppleScriptMediaController: ObservableObject {
         let result = appleScript.executeAndReturnError(&error)
         
         if let error = error {
-            print("AppleScript error: \(error)")
+            //print("AppleScript error: \(error)")
             
             // Check if it's a permission error
             if let errorCode = error[NSAppleScript.errorNumber] as? Int {
                 switch errorCode {
                 case -1743: // errAEEventNotPermitted
-                    print("Permission denied - user needs to grant automation access")
+                    //print("Permission denied - user needs to grant automation access")
                     // You could show an alert here directing user to System Preferences
                     DispatchQueue.main.async {
                         self.showPermissionAlert()

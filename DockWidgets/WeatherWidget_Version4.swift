@@ -52,13 +52,13 @@ struct WeatherWidget_Version4: View {
     }
     
     private func loadWeatherData() {
-        print("🌤️ WeatherWidget: Loading weather data...")
+        //print("🌤️ WeatherWidget: Loading weather data...")
         isLoading = true
         
         // Add timeout to prevent infinite loading
         timeoutTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
             if self.widget.weatherData == nil && self.isLoading {
-                print("🌤️ WeatherWidget: Timeout - falling back to default location")
+                //print("🌤️ WeatherWidget: Timeout - falling back to default location")
                 self.isLoading = false
                 self.loadWeatherForCity("New Delhi")
             }
@@ -66,7 +66,7 @@ struct WeatherWidget_Version4: View {
         
         // Updated to use customLocation for fetching weather
         let city = settings.customLocation.isEmpty ? "New Delhi" : settings.customLocation
-        print("🌤️ WeatherWidget: Using city: \(city)")
+        //print("🌤️ WeatherWidget: Using city: \(city)")
         timeoutTimer?.invalidate()
         loadWeatherForCity(city)
     }
@@ -78,10 +78,10 @@ struct WeatherWidget_Version4: View {
                 self.isLoading = false
                 switch result {
                 case .success(let weatherData):
-                    print("🌤️ WeatherWidget: Successfully fetched weather data for \(city)")
+                    //print("🌤️ WeatherWidget: Successfully fetched weather data for \(city)")
                     self.widget.weatherData = weatherData
                 case .failure(let error):
-                    print("🌤️ WeatherWidget: Weather API error for \(city): \(error)")
+                    //print("🌤️ WeatherWidget: Weather API error for \(city): \(error)")
                     self.widget.weatherData = nil
                 }
             }

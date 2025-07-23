@@ -23,7 +23,7 @@ class WidgetManager: ObservableObject {
         mediaController = AppleScriptMediaController()
         mediaController?.delegate = self
         mediaController?.startMonitoring()
-        print("🎯 MediaController: Monitoring started")
+        //print("🎯 MediaController: Monitoring started")
     }
     
     
@@ -31,7 +31,7 @@ class WidgetManager: ObservableObject {
     private func setupDefaultWidgets() {
         // Create widgets once with fixed positioning
         createFixedPositionWidgets()
-        print("🎯 WidgetManager: Created \(widgets.count) widgets with fixed positioning")
+        //print("🎯 WidgetManager: Created \(widgets.count) widgets with fixed positioning")
     }
     
     private func createFixedPositionWidgets() {

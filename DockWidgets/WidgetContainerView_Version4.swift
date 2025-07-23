@@ -11,10 +11,10 @@ struct WidgetContainerView: View {
         RightClickableContainer(content: AnyView(widgetContent))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onAppear {
-                print("🎯 WidgetContainerView appeared with \(widgetManager.widgets.count) widgets")
-                for (index, widget) in widgetManager.widgets.enumerated() {
-                    print("   Widget \(index): position=\(widget.position), size=\(widget.size), visible=\(widget.isVisible)")
-                }
+                //print("🎯 WidgetContainerView appeared with \(widgetManager.widgets.count) widgets")
+//                for (index, widget) in widgetManager.widgets.enumerated() {
+//                    print("   Widget \(index): position=\(widget.position), size=\(widget.size), visible=\(widget.isVisible)")
+//                }
             }
     }
     
@@ -32,7 +32,7 @@ struct WidgetContainerView: View {
                     .position(widget.position)
                     .opacity(1.0)  // Force full opacity always
                     .onAppear {
-                        print("🎯 Widget appeared at position \(widget.position) with size \(widget.size)")
+                        //print("🎯 Widget appeared at position \(widget.position) with size \(widget.size)")
                     }
             }
         }

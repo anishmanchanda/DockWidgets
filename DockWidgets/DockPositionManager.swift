@@ -22,7 +22,7 @@ class DockPositionManager: ObservableObject {
     func updateDockInfo() {
         let dockInfo = getDockInfo()
         
-        print("🎯 DockPositionManager: Frame=\(dockInfo.frame)")
+        //print("🎯 DockPositionManager: Frame=\(dockInfo.frame)")
         
         DispatchQueue.main.async {
             self.dockPosition = .bottom // Always bottom as requested
@@ -32,13 +32,13 @@ class DockPositionManager: ObservableObject {
     
     private func getDockInfo() -> (position: DockPositionType, frame: NSRect) {
         guard let screenFrame = NSScreen.main?.visibleFrame else {
-            print("🎯 DockPositionManager: No screen detected, returning zero frame.")
+            //print("🎯 DockPositionManager: No screen detected, returning zero frame.")
             return (.bottom, NSRect.zero)
         }
 
         // Get dock size
         let tileSize = getDockTileSize()
-        print("tile size is: \(tileSize)")
+        //print("tile size is: \(tileSize)")
         let dockDefaults = UserDefaults(suiteName: "com.apple.dock")
         let persistentApps = dockDefaults?.array(forKey: "persistent-apps")?.count ?? 0
         let persistentOthers = dockDefaults?.array(forKey: "persistent-others")?.count ?? 0
@@ -49,7 +49,7 @@ class DockPositionManager: ObservableObject {
         let dockX = (screenFrame.width - dockWidth) / 2 + screenFrame.minX
         let dockFrame = NSRect(x: dockX, y: screenFrame.minY, width: dockWidth, height: tileSize)
         
-        print("🎯 DockPositionManager: Calculated dock frame: \(dockFrame)")
+        //print("🎯 DockPositionManager: Calculated dock frame: \(dockFrame)")
         return (.bottom, dockFrame)
     }
     
@@ -67,13 +67,13 @@ class DockPositionManager: ObservableObject {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
            let tileSize = Double(output) {
-            print("🎯 DockPositionManager: Got tile size from defaults: \(tileSize)")
+            //print("🎯 DockPositionManager: Got tile size from defaults: \(tileSize)")
             return CGFloat(tileSize) + 4 // Add padding
         }
         
         // Fallback to default dock size
         let fallbackSize: CGFloat = 60
-        print("🎯 DockPositionManager: Using fallback tile size: \(fallbackSize)")
+        //print("🎯 DockPositionManager: Using fallback tile size: \(fallbackSize)")
         return fallbackSize
     }
     

@@ -11,10 +11,10 @@ class WeatherAPI {
         let lon = location.coordinate.longitude
         let urlString = "\(baseURL)?lat=\(lat)&lon=\(lon)&appid=\(apiKey)&units=metric"
         
-        print("🌤️ Weather API URL: \(urlString)")
+        //print("🌤️ Weather API URL: \(urlString)")
         
         guard let url = URL(string: urlString) else {
-            print("❌ Invalid URL: \(urlString)")
+            //print("❌ Invalid URL: \(urlString)")
             completion(.failure(.invalidURL))
             return
         }
@@ -25,13 +25,13 @@ class WeatherAPI {
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ Network error: \(error.localizedDescription)")
+                //print("❌ Network error: \(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
             }
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("🌐 HTTP Status: \(httpResponse.statusCode)")
+                //print("🌐 HTTP Status: \(httpResponse.statusCode)")
                 if httpResponse.statusCode != 200 {
                     completion(.failure(.httpError(httpResponse.statusCode)))
                     return
@@ -39,16 +39,16 @@ class WeatherAPI {
             }
             
             guard let data = data else {
-                print("❌ No data received")
+                //print("❌ No data received")
                 completion(.failure(.noData))
                 return
             }
             
-            print("📦 Received data: \(data.count) bytes")
+            //print("📦 Received data: \(data.count) bytes")
             
             do {
                 let weatherResponse = try JSONDecoder().decode(WeatherResponse.self, from: data)
-                print("✅ Successfully decoded weather data for: \(weatherResponse.name)")
+                //print("✅ Successfully decoded weather data for: \(weatherResponse.name)")
                 
                 let weatherData = WeatherData(
                     location: weatherResponse.name,
@@ -58,9 +58,9 @@ class WeatherAPI {
                 )
                 completion(.success(weatherData))
             } catch {
-                print("❌ JSON decode error: \(error)")
+                //print("❌ JSON decode error: \(error)")
                 if let jsonString = String(data: data, encoding: .utf8) {
-                    print("📄 Raw JSON: \(jsonString)")
+                    //print("📄 Raw JSON: \(jsonString)")
                 }
                 completion(.failure(.decodingError(error)))
             }
@@ -75,7 +75,7 @@ class WeatherAPI {
         
         let urlString = "\(baseURL)?q=\(encodedCity)&appid=\(apiKey)&units=metric"
         
-        print("🌤️ Weather API URL (city): \(urlString)")
+        //print("🌤️ Weather API URL (city): \(urlString)")
         
         guard let url = URL(string: urlString) else {
             completion(.failure(.invalidURL))
@@ -87,7 +87,7 @@ class WeatherAPI {
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("❌ Network error: \(error.localizedDescription)")
+                //print("❌ Network error: \(error.localizedDescription)")
                 completion(.failure(.networkError(error)))
                 return
             }
@@ -107,7 +107,7 @@ class WeatherAPI {
                 )
                 completion(.success(weatherData))
             } catch {
-                print("❌ JSON decode error: \(error)")
+                //print("❌ JSON decode error: \(error)")
                 completion(.failure(.decodingError(error)))
             }
         }.resume()

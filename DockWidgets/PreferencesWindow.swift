@@ -199,7 +199,7 @@ struct InfoTabView: View {
                             HStack {
                                 Image(nsImage: NSApp.applicationIconImage)
                                     .resizable()
-                                    .frame(width: 64, height: 64)
+                                    .frame(width: 80, height: 80)
                                 
                                 VStack(alignment: .leading) {
                                     Text("DockWidgets")
@@ -216,10 +216,15 @@ struct InfoTabView: View {
                                 .lineLimit(nil)
                                 .fixedSize(horizontal: false, vertical: true)
                             
+                            HStack {
+                                Text("For queries and feedback write to:")
+                                Link("anishmanchanda2006@gmail.com", destination: URL(string: "mailto:anishmanchanda2006@gmail.com")!)
+                                    .foregroundColor(.blue)
+                            }
+                            
                             Text("© 2025 DockWidgets \n  -Anish Manchanda")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            
                         }
                         .padding()
                     }
@@ -243,7 +248,6 @@ struct InfoTabView: View {
         }
     }
 }
-
 // MARK: - Settings Enums
 
 enum TextSize: String, CaseIterable {

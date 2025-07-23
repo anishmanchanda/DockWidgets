@@ -9,7 +9,7 @@ class FlipClockWidget: BaseWidget {
     
     override init(position: CGPoint, size: CGSize = CGSize(width: 180, height: 55)) {
         super.init(position: position, size: size)
-        print("🕰️ FlipClockWidget initialized at position \(position) with size \(size)")
+        //print("🕰️ FlipClockWidget initialized at position \(position) with size \(size)")
         startTimer()
         setupSettingsObserver()
         updateTime()
@@ -20,7 +20,7 @@ class FlipClockWidget: BaseWidget {
             .sink { [weak self] _ in
                 self?.updateTime()
             }
-        print("🕰️ FlipClockWidget: Settings observer enabled")
+        //print("🕰️ FlipClockWidget: Settings observer enabled")
     }
     
     private func startTimer() {
@@ -35,7 +35,7 @@ class FlipClockWidget: BaseWidget {
         let formatter = DateFormatter()
         formatter.dateFormat = settings.getDateFormat()
         currentTime = formatter.string(from: Date())
-        print("⏰ Clock updated: \(currentTime)")
+        //print("⏰ Clock updated: \(currentTime)")
     }
     
     override func createView() -> AnyView {
@@ -63,7 +63,7 @@ struct FlipClockView: View {
         .padding(8)
         .opacity(settings.widgetOpacity)
         .onAppear {
-            print("🕰️ FlipClockView appeared with time: \(widget.currentTime)")
+            //print("🕰️ FlipClockView appeared with time: \(widget.currentTime)")
         }
     }
 }

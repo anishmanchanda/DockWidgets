@@ -4,7 +4,7 @@ class BaseWidget: ObservableObject, Identifiable {
     let id = UUID()
     @Published var position: CGPoint{
         didSet {
-            print("📍Widget position updated to: \(position)")
+            //print("📍Widget position updated to: \(position)")
         
     }
     }
