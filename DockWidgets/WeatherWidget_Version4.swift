@@ -1,200 +1,101 @@
 import SwiftUI
-import CoreLocation
-import Combine
 
-class WeatherWidget: BaseWidget {
-    @Published var weatherData: WeatherData?
-    @Published var isLoading = false
-    private let weatherAPI = WeatherAPI()
-    private let settings = UserSettings.shared
-    private var settingsSubscription: AnyCancellable?
-    private var updateTimer: Timer?
-    private var timeoutTimer: Timer?
-    
-    override init(position: CGPoint, size: CGSize = CGSize(width: 160, height: 50)) {
-        super.init(position: position, size: size)
-        setupSettingsObserver()
-        loadWeatherData()
-        startUpdateTimer()
-    }
-    
-    private func setupSettingsObserver() {
-        settingsSubscription = NotificationCenter.default.publisher(for: .settingsChanged)
-            .sink { [weak self] _ in
-                self?.loadWeatherData()
-                self?.startUpdateTimer()
+struct WeatherWidget_Version4: View {
+    @StateObject private var widget = WeatherData_Version4()
+    //@StateObject private var settings = UserSettings.shared
+    @State private var isLoading = false
+    @State private var timeoutTimer: Timer?
+    @ObservedObject private var settings = UserSettings.shared
+    var body: some View {
+        VStack(spacing: 8) {
+            if isLoading {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Loading...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            } else if let weatherData = widget.weatherData {
+                VStack(spacing: 4) {
+                    HStack {
+                        if let icon = weatherData.weatherIcon {
+                            Image(systemName: icon)
+                                .font(.title2)
+                        }
+                        Text("\(Int(weatherData.temperature))°")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+                    Text(weatherData.condition)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(weatherData.location)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            } else {
+                Text("Weather unavailable")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-    }
-    
-    private func startUpdateTimer() {
-        updateTimer?.invalidate()
-        updateTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(settings.weatherUpdateInterval), repeats: true) { [weak self] _ in
-            self?.loadWeatherData()
+        }
+        .background(Color.clear)
+        .cornerRadius(8)
+        .opacity(settings.widgetOpacity)
+        .onAppear {
+            loadWeatherData()
+        }
+        .onChange(of: settings.customLocation) {
+            loadWeatherData()
         }
     }
     
     private func loadWeatherData() {
+        //print("🌤️ WeatherWidget: Loading weather data...")
         isLoading = true
-        print("🌤️ WeatherWidget: Loading weather data...")
-        print("🌤️ WeatherWidget: Location source: \(settings.locationSource)")
         
         // Add timeout to prevent infinite loading
-        timeoutTimer?.invalidate()
-        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
-            if self?.isLoading == true {
-                print("🌤️ WeatherWidget: Timeout - falling back to default location")
-                self?.isLoading = false
-                self?.loadWeatherForCity("New York")
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { _ in
+            if self.widget.weatherData == nil && self.isLoading {
+                //print("🌤️ WeatherWidget: Timeout - falling back to default location")
+                self.isLoading = false
+                self.loadWeatherForCity("New Delhi")
             }
         }
         
-        if settings.locationSource == .custom && !settings.customLocation.isEmpty {
-            // Use custom location
-            print("🌤️ WeatherWidget: Using custom location: \(settings.customLocation)")
-            loadWeatherForCity(settings.customLocation)
-        } else {
-            // Use GPS location with better error handling
-            print("🌤️ WeatherWidget: Using GPS location")
-            
-            // Check if location services are available
-            if CLLocationManager.locationServicesEnabled() {
-                LocationManager.shared.getCurrentLocation { [weak self] location in
-                    guard let location = location else {
-                        print("🌤️ WeatherWidget: Failed to get location - using default location")
-                        DispatchQueue.main.async {
-                            self?.isLoading = false
-                            self?.loadWeatherForCity("New York")
-                        }
-                        return
-                    }
-                    
-                    print("🌤️ WeatherWidget: Got location: \(location)")
-                    self?.weatherAPI.fetchWeather(for: location) { result in
-                        DispatchQueue.main.async {
-                            self?.timeoutTimer?.invalidate()
-                            self?.isLoading = false
-                            switch result {
-                            case .success(let data):
-                                print("🌤️ WeatherWidget: Successfully fetched weather data: \(data)")
-                                self?.weatherData = self?.convertTemperature(data)
-                            case .failure(let error):
-                                print("🌤️ WeatherWidget: Weather API error: \(error)")
-                                // Fall back to default location on API error
-                                self?.loadWeatherForCity("New York")
-                            }
-                        }
-                    }
-                }
-            } else {
-                print("🌤️ WeatherWidget: Location services disabled - using default location")
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    self.loadWeatherForCity("New York")
-                }
-            }
-        }
+        // Updated to use customLocation for fetching weather
+        let city = settings.customLocation.isEmpty ? "New Delhi" : settings.customLocation
+        //print("🌤️ WeatherWidget: Using city: \(city)")
+        timeoutTimer?.invalidate()
+        loadWeatherForCity(city)
     }
     
     private func loadWeatherForCity(_ city: String) {
-        timeoutTimer?.invalidate()
         isLoading = true
-        print("🌤️ WeatherWidget: Loading weather for city: \(city)")
-        
-        weatherAPI.fetchWeatherByCity(city) { [weak self] result in
+        WeatherAPI.shared.getWeatherData(for: city) { result in
             DispatchQueue.main.async {
-                self?.isLoading = false
+                self.isLoading = false
                 switch result {
-                case .success(let data):
-                    print("🌤️ WeatherWidget: Successfully fetched weather data for \(city)")
-                    self?.weatherData = self?.convertTemperature(data)
+                case .success(let weatherData):
+                    //print("🌤️ WeatherWidget: Successfully fetched weather data for \(city)")
+                    self.widget.weatherData = weatherData
                 case .failure(let error):
-                    print("🌤️ WeatherWidget: Weather API error for \(city): \(error)")
-                    self?.weatherData = nil
+                    //print("🌤️ WeatherWidget: Weather API error for \(city): \(error)")
+                    self.widget.weatherData = nil
                 }
             }
         }
     }
-    
-    private func convertTemperature(_ data: WeatherData) -> WeatherData {
-        let convertedTemp: Int
-        if settings.temperatureUnit == .fahrenheit {
-            convertedTemp = Int(Double(data.temperature) * 9/5 + 32)
-        } else {
-            convertedTemp = data.temperature
-        }
-        
-        return WeatherData(
-            location: data.location,
-            temperature: convertedTemp,
-            condition: data.condition,
-            weatherIcon: data.weatherIcon
-        )
-    }
-    
+}
+// MARK: - WeatherData_Version4 Class
+class WeatherData_Version4: ObservableObject {
+    @Published var weatherData: WeatherData?
+}
+
+// MARK: - WeatherWidget Wrapper Class
+class WeatherWidget: BaseWidget {
     override func createView() -> AnyView {
-        AnyView(WeatherView(widget: self))
+        AnyView(WeatherWidget_Version4())
     }
-}
-
-struct WeatherView: View {
-    @ObservedObject var widget: WeatherWidget
-    @ObservedObject private var settings = UserSettings.shared
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            if widget.isLoading {
-                ProgressView()
-                    .scaleEffect(0.6)
-                    .foregroundColor(.white)
-            } else if let weather = widget.weatherData {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(weather.location)
-                        .font(.system(size: getFontSize() * 0.8))
-                        .foregroundColor(.white)
-                        .shadow(color: .black, radius: 1, x: 0, y: 0)
-                    Text(weather.condition)
-                        .font(.system(size: getFontSize() * 0.6))
-                        .foregroundColor(.white.opacity(0.8))
-                        .shadow(color: .black, radius: 1, x: 0, y: 0)
-                }
-                
-                Spacer()
-                
-                HStack(spacing: 4) {
-                    Text(weather.weatherIcon)
-                        .font(.system(size: getFontSize() * 1.2))
-                        .shadow(color: .black, radius: 1, x: 0, y: 0)
-                    Text("\(weather.temperature)°\(settings.temperatureUnit == .fahrenheit ? "F" : "C")")
-                        .font(.system(size: getFontSize(), weight: .semibold))
-                        .foregroundColor(.white)
-                        .shadow(color: .black, radius: 1, x: 0, y: 0)
-                }
-            } else {
-                Text("Weather unavailable")
-                    .font(.system(size: getFontSize() * 0.7))
-                    .foregroundColor(.white.opacity(0.6))
-                    .shadow(color: .black, radius: 1, x: 0, y: 0)
-            }
-        }
-        .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.clear)
-        )
-        .opacity(settings.widgetOpacity)
-    }
-    
-    private func getFontSize() -> CGFloat {
-        // Base font size for weather widget, scaled by widget height
-        let baseSize: CGFloat = 16
-        let scaleFactor = widget.size.height / 50  // 50 is our base height
-        return max(baseSize * scaleFactor, 12)  // Minimum 12pt font
-    }
-}
-
-struct WeatherData {
-    let location: String
-    let temperature: Int
-    let condition: String
-    let weatherIcon: String
 }

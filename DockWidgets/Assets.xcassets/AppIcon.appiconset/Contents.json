@@ -1,51 +1,61 @@
 {
   "images" : [
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-7.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "16x16"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-6 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "16x16"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-6.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "32x32"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-5.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "32x32"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-4.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "128x128"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-3 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "128x128"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-3.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "256x256"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-2 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "256x256"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8-2.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "512x512"
     },
     {
+      "filename" : "7549c555-e975-429c-8f3e-b1fb17c975e8.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"

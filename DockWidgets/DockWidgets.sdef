@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary>
+    <suite name="DockWidgets" code="DWGT">
+        <command name="playMusic" code="pmsc">
+            <description>Plays music using the widget.</description>
+        </command>
+        <command name="pauseMusic" code="pmsc">
+            <description>Pauses music playback.</description>
+        </command>
+    </suite>
+</dictionary>
