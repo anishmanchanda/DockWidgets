@@ -107,15 +107,6 @@ For questions, feedback, or support:
 - **Email**: anishmanchanda2006@gmail.com
 - **Issues**: [GitHub Issues](https://github.com/anishmanchanda/dockwidgets/issues)
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Thanks to the macOS development community for inspiration
-- Special thanks to beta testers who helped improve DockWidgets
-
 ---
 
 **© 2025 DockWidgets** | Made with ❤️ for macOS users who love productivity and beautiful interfaces
