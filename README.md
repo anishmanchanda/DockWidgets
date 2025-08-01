@@ -3,7 +3,7 @@
 **Transform Your Empty Dock Space into Something Useful**
 
 Add transparent, functional widgets to the unused space beside your macOS dock. DockWidgets brings essential information and controls right to your desktop without cluttering your workspace.
-
+<img src="https://github.com/anishmanchanda/dockwidgets/blob/main/media/overview-highres.png" alt="Overview" style="width:50%; height:auto;">
 ![DockWidgets Before/After](https://github.com/anishmanchanda/dockwidgets/blob/main/media/overview-highres.png)
 
 ## ✨ Features
