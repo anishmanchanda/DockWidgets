@@ -53,6 +53,9 @@ Add transparent, functional widgets to the unused space beside your macOS dock. 
 
 *Note: Since DockWidgets doesn't have Apple notarization yet, you may need to bypass Gatekeeper on first launch.*
 
+## 🎥 Demo Video
+
+[![Demo Video](https://img.youtube.com/vi/rEPkCW5Uui4/0.jpg)](https://youtu.be/rEPkCW5Uui4)
 ## ⚙️ Configuration
 
 ### Setting Up Weather Location
