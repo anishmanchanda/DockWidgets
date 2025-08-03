@@ -25,8 +25,7 @@ Add transparent, functional widgets to the unused space beside your macOS dock. 
 - Control music playback without switching apps
 - Works seamlessly with Apple Music and Spotify
 - Play, pause, and skip tracks
-- Current track information display
-- Artist and album details
+- Current track and artist details display
 
 ## 🎨 Design Philosophy
 
@@ -65,13 +64,6 @@ Add transparent, functional widgets to the unused space beside your macOS dock. 
 - Adjust widget opacity through the preferences panel
 - Choose between 12/24-hour clock formats
 - Toggle seconds display on/off
-
-## 🔒 Privacy & Permissions
-
-DockWidgets respects your privacy and requires minimal permissions:
-- **Script execution**: Only needed to control music playback in Spotify or Apple Music
-- **Location services**: Optional, only if you want automatic weather location detection
-- **No data collection**: All information stays on your device
 
 ## ❓ FAQ
 
