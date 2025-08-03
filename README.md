@@ -67,7 +67,7 @@ Add transparent, functional widgets to the unused space beside your macOS dock. 
 
 ## ❓ FAQ
 
-**Q: Will the widgets interfere with my apps?**
+**Q: Will the widgets block my apps?**
 A: No, widgets are designed to stay within the dock's height and won't block any app content.
 
 **Q: Does this slow down my Mac?**
