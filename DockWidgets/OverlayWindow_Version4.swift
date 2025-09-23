@@ -15,27 +15,18 @@ class OverlayWindow: NSWindow {
     private var enterConsistency = 0
     private var exitConsistency = 0
     // Update timing constants for better responsiveness and stability
-    private let sampleInterval: TimeInterval = 0.15 // Even faster detection
-    private let requiredExitStable: TimeInterval = 0.8 // Balanced exit timing
-    private let minEnterStable: TimeInterval = 0.1 // Very fast entry
-    private let spaceTransitionIgnore: TimeInterval = 0.3 // Reduced transition ignore
+    private let sampleInterval: TimeInterval = 0.5 // Much slower, very stable detection
+    private let requiredExitStable: TimeInterval = 0.7 // Even longer exit time
+    private let minEnterStable: TimeInterval = 0.5 // Reasonable entry time
     private var resampleBurstWork: DispatchWorkItem?
     private var debugFS = true
-    // Exit tracking (fast mode)
+    // Simplified state tracking
+    private var lastFullscreenCheck: Bool = false
+    private var fullscreenStateChangeTime: Date?
+    // Missing properties that were referenced in the code
     private var firstExitCandidateAt: Date?
-    private var lastMenuBarVisibleAt: Date?
-    // Optimistic early show
-    private let optimisticEarlyShow = false // Disabled to prevent premature showing
-    private var optimisticShownAt: Date?
-    // Space transition ignore & stable enter
-    private var lastSpaceChangeAt: Date?
     private var firstFullscreenCandidateAt: Date?
-    
-    // Helper
-    private func isInSpaceTransitionIgnore() -> Bool {
-        if let t = lastSpaceChangeAt { return Date().timeIntervalSince(t) < spaceTransitionIgnore }
-        return false
-    }
+    private var optimisticShownAt: Date?
     
     // MARK: Init
     override init(contentRect: NSRect, styleMask style: NSWindow.StyleMask, backing backingStoreType: NSWindow.BackingStoreType, defer flag: Bool) {
@@ -65,11 +56,20 @@ class OverlayWindow: NSWindow {
     // MARK: Observers
     private func setupFullscreenObservers() {
         let nc = NSWorkspace.shared.notificationCenter
+        
+        // 1. Observer for when the active space (Desktop) changes.
         spaceChangeObserver = nc.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.lastSpaceChangeAt = Date()
-            self?.triggerResampleBurst(reason: "spaceChange")
+            guard let self = self else { return }
+            if self.debugFS { print("[FS] Space change detected. Triggering resample burst.") }
+            
+            // Using a burst of checks is more reliable than a single check.
+            // It gives the system time to settle and increases the chance of a correct state reading.
+            self.triggerResampleBurst(reason: "postSpaceChange")
         }
+        
+        // 2. Observer for when the frontmost application changes.
         appActivationObserver = nc.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
+            // A single check is usually fine for app activation, but a burst is even safer.
             self?.triggerResampleBurst(reason: "appActivate")
         }
     }
@@ -98,54 +98,51 @@ class OverlayWindow: NSWindow {
     
     // MARK: Sampling & State Machine
     private func processSnapshot(reason: String) {
-        let snapshot = fullscreenSnapshotDetails()
-        if debugFS {
-            print("[FS] reason=\(reason) isFS=\(snapshot.isFullscreen) enterStable=\(String(format: "%.2f", firstFullscreenCandidateAt.map{Date().timeIntervalSince($0)} ?? 0)) exitStable=\(String(format: "%.2f", firstExitCandidateAt.map{Date().timeIntervalSince($0)} ?? 0)) state=\(fsState) alpha=\(alphaValue)")
+        // The check for a space transition ignore period has been removed.
+        // This allows the logic to run reactively after a space change.
+        
+        let currentFullscreen = detectFullscreenApp()
+        
+        // Track state changes with timestamps
+        if currentFullscreen != lastFullscreenCheck {
+            lastFullscreenCheck = currentFullscreen
+            fullscreenStateChangeTime = Date()
+            if debugFS {
+                print("[FS] STATE CHANGE: \(currentFullscreen ? "FULLSCREEN" : "NORMAL") detected for reason=\(reason)")
+            }
         }
         
-        switch fsState {
-        case .normal:
-            // Enhanced fullscreen detection - check for fullscreen windows or hidden menu bar
-            if snapshot.isFullscreen && !isInSpaceTransitionIgnore() {
-                if firstFullscreenCandidateAt == nil {
-                    firstFullscreenCandidateAt = Date()
-                    if debugFS { print("[FS] Starting fullscreen candidate timer") }
-                }
-                if Date().timeIntervalSince(firstFullscreenCandidateAt!) >= minEnterStable {
-                    if debugFS { print("[FS] Transitioning to fullscreen after stable period") }
-                    transitionToFullscreen()
-                }
-            } else {
-                if firstFullscreenCandidateAt != nil && debugFS { print("[FS] Canceling fullscreen candidate") }
-                firstFullscreenCandidateAt = nil
+        // Require stability period before acting on state changes
+        guard let changeTime = fullscreenStateChangeTime,
+              Date().timeIntervalSince(changeTime) >= (currentFullscreen ? minEnterStable : requiredExitStable) else {
+            if debugFS {
+                let elapsed = fullscreenStateChangeTime.map { Date().timeIntervalSince($0) } ?? 0
+                let required = currentFullscreen ? minEnterStable : requiredExitStable
+                print("[FS] WAITING for stability: \(String(format: "%.1f", elapsed))/\(String(format: "%.1f", required))s - current=\(currentFullscreen) state=\(fsState)")
             }
-            firstExitCandidateAt = nil
-            optimisticShownAt = nil
-            
-        case .fullscreen:
-            // Enhanced exit detection - check for absence of fullscreen windows AND visible menu bar
-            if !snapshot.isFullscreen && !isInSpaceTransitionIgnore() {
-                if firstExitCandidateAt == nil {
-                    firstExitCandidateAt = Date()
-                    if debugFS { print("[FS] Starting exit candidate timer") }
-                }
-                // Exit after stable period with confirmed non-fullscreen state
-                if Date().timeIntervalSince(firstExitCandidateAt!) >= requiredExitStable {
-                    if debugFS { print("[FS] Transitioning to normal - no fullscreen windows detected") }
-                    transitionToNormal()
-                }
-            } else {
-                // Cancel exit if fullscreen window detected again
-                if firstExitCandidateAt != nil && debugFS { print("[FS] Canceling exit candidate - fullscreen window detected") }
-                firstExitCandidateAt = nil
-                
-                // AGGRESSIVE re-hiding if any fullscreen indicator is present
-                if snapshot.isFullscreen && (alphaValue > 0) {
-                    if debugFS { print("[FS] AGGRESSIVE re-hiding - fullscreen indicators present") }
-                    hideForFullscreen()
-                }
-            }
-            firstFullscreenCandidateAt = nil
+            return
+        }
+        
+        // Now we have a stable state - act on it
+        if currentFullscreen && fsState == .normal {
+            if debugFS { print("[FS] *** STABLE FULLSCREEN - HIDING WIDGETS ***") }
+            fsState = .fullscreen
+            hideForFullscreen()
+            fullscreenStateChangeTime = nil
+        } else if !currentFullscreen && fsState == .fullscreen {
+            if debugFS { print("[FS] *** STABLE NORMAL - SHOWING WIDGETS ***") }
+            fsState = .normal
+            showAfterFullscreen()
+            fullscreenStateChangeTime = nil
+        }
+        
+        // Ensure widgets are in correct state
+        if fsState == .normal && alphaValue < 1 {
+            if debugFS { print("[FS] CORRECTING: Ensuring widgets visible in normal state") }
+            showAfterFullscreen()
+        } else if fsState == .fullscreen && alphaValue > 0 {
+            if debugFS { print("[FS] CORRECTING: Ensuring widgets hidden in fullscreen state") }
+            hideForFullscreen()
         }
     }
     
@@ -205,15 +202,15 @@ class OverlayWindow: NSWindow {
         let visibleFrame = screen.visibleFrame
         let menuBarHeight = screenFrame.maxY - visibleFrame.maxY
         
-        // Very lenient menu bar check - if menu bar is significantly reduced
-        if menuBarHeight < 10 {
+        // Balanced menu bar check - if menu bar is mostly hidden
+        if menuBarHeight < 8 {
             if debugFS {
                 print("[FS] FULLSCREEN DETECTED via menu bar for \(appName) - menuBarHeight: \(menuBarHeight)")
             }
             return true
         }
         
-        // Secondary check: Simple window size detection without strict accessibility requirements
+        // Secondary check: Window size detection with reasonable thresholds
         let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
         if let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] {
             let pid = frontmostApp.processIdentifier
@@ -227,15 +224,16 @@ class OverlayWindow: NSWindow {
                     continue
                 }
                 
-                // Very simple fullscreen detection - if window is close to screen size
+                // Balanced fullscreen detection - 90% coverage OR 85% with hidden menu bar
                 let widthRatio = width / screenFrame.width
                 let heightRatio = height / screenFrame.height
                 
-                if widthRatio > 0.8 && heightRatio > 0.8 {
+                if (widthRatio > 0.9 && heightRatio > 0.9) ||
+                   (widthRatio > 0.85 && heightRatio > 0.85 && menuBarHeight < 12) {
                     if debugFS {
                         print("[FS] FULLSCREEN DETECTED via large window for \(appName)")
                         print("[FS] Window size: \(Int(width))x\(Int(height)), Screen: \(Int(screenFrame.width))x\(Int(screenFrame.height))")
-                        print("[FS] Coverage: \(Int(widthRatio*100))% x \(Int(heightRatio*100))%")
+                        print("[FS] Coverage: \(Int(widthRatio*100))% x \(Int(heightRatio*100))%, menuBar: \(menuBarHeight)px")
                     }
                     return true
                 }
@@ -319,3 +317,9 @@ class OverlayWindow: NSWindow {
 }
 
 enum DockPosition { case bottom, left, right }
+
+// You may need to add placeholder definitions for these if they are in other files
+// For example:
+// class DockPositionManager { static let shared = DockPositionManager(); var dockFrame: NSRect = .zero }
+// class WidgetManager {}
+// struct WidgetContainerView: View { var window: NSWindow?; var widgetManager: WidgetManager?; var body: some View { Text("Widgets") }}
